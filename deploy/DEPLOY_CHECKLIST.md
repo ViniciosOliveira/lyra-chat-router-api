@@ -31,10 +31,20 @@ Objetivo: subir a API em paralelo, validar com smoke test e só depois decidir t
 - Admin com secret retornou modo `database`.
 - Logs do journal sem stacktrace.
 
+### 2026-05-19 14:44 BRT — Gates 4 e 5 concluídos
+
+- Nginx em `api.grupooliveirarocha.com` configurado com `location /googlechat/`.
+- Proxy público aponta para `http://127.0.0.1:3201/googlechat/`.
+- Header `Authorization` preservado.
+- Backup da config movido para `/etc/nginx/backups/api.backup-20260519-144324`.
+- `nginx -t` OK sem warnings após mover backup para fora de `sites-enabled`.
+- Reload do nginx executado.
+- Smoke público:
+  - `GET https://api.grupooliveirarocha.com/googlechat/health` OK.
+  - `POST https://api.grupooliveirarocha.com/googlechat/` sem JWT retornou `401`.
+
 Ainda não executado:
 
-- Gate 4 nginx.
-- Gate 5 smoke público.
 - Gate 6 Google Chat real.
 
 ## Premissas
