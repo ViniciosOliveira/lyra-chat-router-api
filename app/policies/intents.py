@@ -14,6 +14,9 @@ class Intent(StrEnum):
     CODE_CHANGE = "code_change"
     DEPLOY = "deploy"
     EXTERNAL_MESSAGE_SEND = "external_message_send"
+    TURNSTILE_CONTROL = "turnstile_control"
+    CERTIFICATE_SIGNING = "certificate_signing"
+    CORREIOS_LABEL = "correios_label"
     UNKNOWN_OPERATIONAL_EXECUTION = "unknown_operational_execution"
     UNKNOWN = "unknown"
 
@@ -28,6 +31,34 @@ BLOCKING_KEYWORDS = {
     Intent.EXTERNAL_MESSAGE_SEND: ["manda mensagem", "envia para", "dispara"],
 }
 
+OPERATIONAL_SCOPE_KEYWORDS = {
+    Intent.TURNSTILE_CONTROL: [
+        "catraca",
+        "libera entrada",
+        "liberar entrada",
+        "libera saída",
+        "liberar saída",
+        "libera saida",
+        "liberar saida",
+        "modo livre",
+        "voltar ao normal",
+    ],
+    Intent.CERTIFICATE_SIGNING: [
+        "certificado",
+        "certificados",
+        "assinar certificado",
+        "assinatura de certificado",
+        "nr",
+    ],
+    Intent.CORREIOS_LABEL: [
+        "correios",
+        "etiqueta",
+        "etiquetas",
+        "código de postagem",
+        "codigo de postagem",
+    ],
+}
+
 ANALYSIS_KEYWORDS = {
     Intent.PERFORMANCE_REPORT: ["relatório", "report", "resumo", "resultado"],
     Intent.TRACKING_DIAGNOSIS: ["tracking", "utm", "pixel", "evento", "tag"],
@@ -40,6 +71,9 @@ ANALYSIS_KEYWORDS = {
 def classify_intent(text: str) -> Intent:
     lowered = text.lower()
     for intent, keywords in BLOCKING_KEYWORDS.items():
+        if any(keyword in lowered for keyword in keywords):
+            return intent
+    for intent, keywords in OPERATIONAL_SCOPE_KEYWORDS.items():
         if any(keyword in lowered for keyword in keywords):
             return intent
     for intent, keywords in ANALYSIS_KEYWORDS.items():

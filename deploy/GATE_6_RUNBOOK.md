@@ -15,17 +15,22 @@ Validate a real Google Chat event against Lyra Chat Router API before considerin
 - Google Chat service account issuer/email expected: `chat@system.gserviceaccount.com`
 - OpenClaw config currently expects audience: `https://lyra.grupooliveirarocha.com/googlechat`
 
-## Hard safety constraint
+## Global endpoint migration note
 
 Google Chat App endpoint is global for the app, not per-space. Switching it affects DMs and all enabled spaces.
 
-The current router MVP only has an active policy for `spaces/AAQAiP4nKa4` (`mkt_performance_analysis_only`). Any other space falls into `default_safe` and receives a denial response.
+As of 2026-05-19, the router has explicit policy mappings for every Google Chat space currently configured in OpenClaw plus the Mkt Performance space:
 
-Therefore, do **not** leave the Chat app endpoint pointed at the router until one of these is true:
+- `spaces/mqWtpSAAAAE` — DM Vinícios / owner-only
+- `spaces/AAQAqr2EWPE` — Teste Lyra / owner-only
+- `spaces/AAQA_-CeRZ4` — owner workspace / owner-only
+- `spaces/AAQAPj4LoCM` — catraca only
+- `spaces/AAQA3N7lE8k` — catraca only
+- `spaces/AAQAKE4s-Ko` — dev/Mission Control / owner-only
+- `spaces/AAQAqhVlskk` — certificados digitais + Correios only
+- `spaces/AAQAiP4nKa4` — Mkt Performance analysis only
 
-1. The router implements all required DM/group behavior; or
-2. The migration is intentionally limited to a short test window and rolled back immediately; or
-3. A dedicated/staging Google Chat app is used for real JWT validation.
+Operational execution handlers are still intentionally safe/placeholder unless separately connected to the official scripts/agent execution layer. This prevents unknown-space/default denial during the global endpoint switch while keeping execution risk contained.
 
 ## Preflight checks already passed
 
@@ -56,11 +61,13 @@ service active
 
    `https://console.developers.google.com/apis/api/chat.googleapis.com/hangouts-chat?project=lyra-490912`
 
+   Console path: *Google Cloud Console* → project `lyra-490912` → *APIs & Services* → *Google Chat API* → *Configuration*.
+
 2. Record current values before changing:
    - HTTP endpoint URL: `https://lyra.grupooliveirarocha.com/googlechat`
    - Authentication Audience: HTTP endpoint URL / app URL mode
 
-3. Change HTTP endpoint URL to:
+3. Change *HTTP endpoint URL* / *App URL* to:
 
    `https://api.grupooliveirarocha.com/googlechat/`
 
