@@ -3,7 +3,7 @@ import json
 import logging
 from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
 from sqlalchemy import text
 
 from app.audit.logger import AuditLogger
@@ -105,12 +105,19 @@ def _is_duplicate_message(event: NormalizedChatEvent) -> bool:
     return int(count) > 0
 
 
-def _verify_pubsub_request(settings: Settings, authorization: str | None, x_router_secret: str | None) -> None:
-    # MVP protection for push delivery. Google Pub/Sub OIDC validation can be added after
-    # the Cloud subscription/service account is finalized; until then keep this endpoint
-    # protected by an explicit shared secret at nginx/PubSub header level.
+def _verify_pubsub_request(
+    settings: Settings,
+    authorization: str | None,
+    x_router_secret: str | None,
+    query_secret: str | None,
+) -> None:
+    # MVP protection for push delivery. Pub/Sub push doesn't support arbitrary custom
+    # headers, so we accept either the manual-smoke header or a subscription endpoint
+    # query secret. Replace with Pub/Sub OIDC validation after the Cloud subscription
+    # service account is finalized.
     if settings.google_chat_pubsub_shared_secret:
-        if x_router_secret != settings.google_chat_pubsub_shared_secret:
+        provided_secret = x_router_secret or query_secret
+        if provided_secret != settings.google_chat_pubsub_shared_secret:
             raise HTTPException(status_code=401, detail="Invalid Pub/Sub router secret")
         return
     if settings.is_prod:
@@ -124,9 +131,10 @@ async def receive_pubsub_event(
     response: Response,
     authorization: str | None = Header(default=None),
     x_lyra_router_secret: str | None = Header(default=None),
+    secret: str | None = Query(default=None),
     settings: Settings = Depends(get_settings),
 ) -> dict[str, Any]:
-    _verify_pubsub_request(settings, authorization, x_lyra_router_secret)
+    _verify_pubsub_request(settings, authorization, x_lyra_router_secret, secret)
     payload = await request.json()
     cloud_event = _decode_pubsub_payload(payload)
     event = normalize_workspace_event(cloud_event)

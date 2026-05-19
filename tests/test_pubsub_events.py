@@ -66,6 +66,20 @@ def test_pubsub_endpoint_accepts_workspace_message_without_openclaw_hook(monkeyp
     assert response.json()["handler"] == "pubsub_noop"
 
 
+def test_pubsub_endpoint_accepts_query_secret_for_google_pubsub_push(monkeypatch):
+    _set_pubsub_env(monkeypatch)
+    client = TestClient(app)
+
+    response = client.post(
+        "/googlechat/events/pubsub?secret=test-secret",
+        json=_pubsub_payload(_workspace_event()),
+    )
+
+    get_settings.cache_clear()
+    assert response.status_code == 200
+    assert response.json()["status"] == "accepted"
+
+
 def test_pubsub_endpoint_ignores_bot_messages(monkeypatch):
     _set_pubsub_env(monkeypatch)
     client = TestClient(app)

@@ -22,14 +22,16 @@ Implementado no router:
 ## Endpoint público
 
 ```text
-https://api.grupooliveirarocha.com/googlechat/events/pubsub
+https://api.grupooliveirarocha.com/googlechat/events/pubsub?secret=<GOOGLE_CHAT_PUBSUB_SHARED_SECRET>
 ```
 
-Header obrigatório no MVP:
+Header também aceito para smoke manual:
 
 ```text
 X-Lyra-Router-Secret: <GOOGLE_CHAT_PUBSUB_SHARED_SECRET>
 ```
+
+Observação: Pub/Sub push não suporta headers customizados arbitrários; por isso o endpoint real usa query param no MVP. Hardening futuro: validação OIDC do Pub/Sub push.
 
 ## Configuração Google Cloud necessária
 
@@ -56,9 +58,7 @@ Criar push subscription para o router:
 ```bash
 gcloud pubsub subscriptions create lyra-chat-router-events-push \
   --topic=lyra-chat-router-events \
-  --push-endpoint=https://api.grupooliveirarocha.com/googlechat/events/pubsub \
-  --push-auth-service-account=<SERVICE_ACCOUNT_WITH_PUSH_AUTH> \
-  --push-auth-token-audience=https://api.grupooliveirarocha.com/googlechat/events/pubsub
+  --push-endpoint='https://api.grupooliveirarocha.com/googlechat/events/pubsub?secret=<GOOGLE_CHAT_PUBSUB_SHARED_SECRET>'
 ```
 
 Observação: o código atual valida shared secret. Para produção hardening, trocar para validação OIDC Pub/Sub push e remover dependência de header secreto.
