@@ -1,7 +1,32 @@
 # Lyra Chat Router API — Deploy Checklist
 
-Status: checklist operacional preparado, ainda não executado em produção.  
+Status: Gates 1 e 2 executados em 2026-05-19; API copiada para o servidor `backends`, mas ainda sem systemd/nginx público.  
 Objetivo: subir a API em paralelo, validar com smoke test e só depois decidir troca controlada do endpoint do Google Chat.
+
+## Deployment log
+
+### 2026-05-19 14:22 BRT — Gates 1 e 2 concluídos
+
+- Banco `lyra_chat_router` criado/validado no servidor `database` (`10.0.0.2`).
+- Usuário PostgreSQL `chat_router` criado/rotacionado.
+- Migration `001_initial.sql` aplicada.
+- Seed `mkt_performance_analysis_only:active` validado.
+- API copiada para `/opt/lyra-chat-router-api/` no servidor `backends` (`10.0.0.3`).
+- `.env` real criado no servidor com permissão `600`.
+- Venv criado e dependências instaladas.
+- Testes no servidor: `13 passed`.
+- Smoke local em prod:
+  - `GET /googlechat/health` OK.
+  - `POST /googlechat/` sem JWT retornou `401`.
+  - Admin com secret retornou modo `database`.
+- Smoke local em dev controlado validou persistência de auditoria no banco.
+
+Ainda não executado:
+
+- Gate 3 systemd.
+- Gate 4 nginx.
+- Gate 5 smoke público.
+- Gate 6 Google Chat real.
 
 ## Premissas
 
