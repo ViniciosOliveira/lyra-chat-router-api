@@ -1,0 +1,19 @@
+{
+  "type": "MESSAGE",
+  "space": {
+    "name": "spaces/AAQAiP4nKa4",
+    "displayName": "Comitê de Mkt Performance"
+  },
+  "user": {
+    "name": "users/108616006099141003473",
+    "displayName": "Vinícios Oliveira",
+    "email": "vinicios@grupooliveirarocha.com"
+  },
+  "message": {
+    "name": "spaces/AAQAiP4nKa4/messages/test",
+    "text": "Analisa o CPL do Google Ads essa semana",
+    "thread": {
+      "name": "spaces/AAQAiP4nKa4/threads/test"
+    }
+  }
+}

@@ -1,0 +1,26 @@
+from functools import lru_cache
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    app_env: str = "dev"
+    app_name: str = "lyra-chat-router-api"
+    public_base_url: str = "https://api.grupooliveirarocha.com/googlechat"
+    database_url: str | None = None
+    google_chat_audience: str = "https://api.grupooliveirarocha.com/googlechat/"
+    google_chat_auth_mode: str = "app_url"
+    google_chat_dev_bypass_auth: bool = True
+    openclaw_forward_enabled: bool = False
+    openclaw_forward_url: str | None = None
+    mc_admin_shared_secret: str | None = None
+
+    @property
+    def is_prod(self) -> bool:
+        return self.app_env.lower() in {"prod", "production"}
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()

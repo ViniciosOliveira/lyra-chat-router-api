@@ -1,0 +1,14 @@
+[Unit]
+Description=Lyra Chat Router API
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/lyra-chat-router-api
+EnvironmentFile=/opt/lyra-chat-router-api/.env
+ExecStart=/opt/lyra-chat-router-api/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 3201
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
