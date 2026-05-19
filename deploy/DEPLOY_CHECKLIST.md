@@ -21,9 +21,18 @@ Objetivo: subir a API em paralelo, validar com smoke test e só depois decidir t
   - Admin com secret retornou modo `database`.
 - Smoke local em dev controlado validou persistência de auditoria no banco.
 
+### 2026-05-19 14:26 BRT — Gate 3 concluído
+
+- Serviço `/etc/systemd/system/lyra-chat-router-api.service` criado no `backends`.
+- Serviço habilitado no boot: `enabled`.
+- Serviço ativo: `active (running)`.
+- Health local via systemd OK.
+- `POST /googlechat/` sem JWT retornou `401`.
+- Admin com secret retornou modo `database`.
+- Logs do journal sem stacktrace.
+
 Ainda não executado:
 
-- Gate 3 systemd.
 - Gate 4 nginx.
 - Gate 5 smoke público.
 - Gate 6 Google Chat real.
