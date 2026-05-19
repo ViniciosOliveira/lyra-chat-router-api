@@ -18,6 +18,7 @@ def health(settings: Settings = Depends(get_settings)) -> dict:
     return {"status": "ok", "service": settings.app_name}
 
 
+@router.post("")
 @router.post("/")
 async def receive_google_chat_event(
     request: Request,
