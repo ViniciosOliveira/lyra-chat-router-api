@@ -7,6 +7,7 @@ from app.googlechat.normalizer import normalize_event
 from app.handlers.analytics import build_analytics_response
 from app.handlers.deny import build_deny_response
 from app.handlers.direct_reply import build_direct_reply
+from app.handlers.openclaw_forward import OpenClawForwardError, forward_to_openclaw
 from app.handlers.scoped_operation import build_scoped_operation_response
 from app.policies.engine import PolicyEngine
 
@@ -52,6 +53,26 @@ async def receive_google_chat_event(
 
     if decision.handler == "deny_handler":
         response = build_deny_response(decision)
+    elif settings.openclaw_forward_enabled:
+        try:
+            response = await forward_to_openclaw(
+                settings=settings,
+                payload=payload,
+                event=event,
+                decision=decision,
+                authorization=authorization,
+            )
+            AuditLogger().record_routing(event=event, decision=decision, response=response)
+            return response
+        except OpenClawForwardError:
+            # Fail closed but user-visible: Google Chat should receive a valid message instead
+            # of falling back to the opaque "app isn't responding" state.
+            response = {
+                "text": (
+                    "Recebi a mensagem, mas o handler principal da Lyra está temporariamente "
+                    "indisponível. O router seguro continua ativo."
+                )
+            }
     elif decision.handler == "analytics_handler":
         response = build_analytics_response(event, decision)
     elif decision.handler == "scoped_operation_handler":

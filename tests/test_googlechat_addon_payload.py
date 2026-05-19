@@ -1,5 +1,8 @@
 from fastapi.testclient import TestClient
 
+from app.core.config import get_settings
+from app.googlechat import router as googlechat_router
+from app.handlers import openclaw_forward
 from app.main import app
 
 
@@ -55,3 +58,46 @@ def test_workspace_addon_message_payload_normalizes_message_fields():
     assert response.status_code == 200
     message = response.json()["hostAppDataAction"]["chatDataAction"]["createMessageAction"]["message"]
     assert "Mensagem recebida" in message["text"]
+
+
+def test_workspace_addon_message_payload_forwards_to_openclaw_when_enabled(monkeypatch):
+    async def fake_forward_to_openclaw(**kwargs):
+        assert kwargs["settings"].openclaw_forward_enabled is True
+        assert kwargs["event"].space_name == "spaces/mqWtpSAAAAE"
+        assert kwargs["event"].text == "oi Lyra"
+        assert kwargs["decision"].decision == "allow"
+        return {"text": "Resposta real da Lyra"}
+
+    monkeypatch.setattr(googlechat_router, "forward_to_openclaw", fake_forward_to_openclaw)
+
+    get_settings.cache_clear()
+    monkeypatch.setenv("OPENCLAW_FORWARD_ENABLED", "true")
+    monkeypatch.setenv("OPENCLAW_FORWARD_URL", "http://10.0.0.5:18789/googlechat")
+
+    client = TestClient(app)
+    response = client.post("/googlechat", json=_addon_payload("oi Lyra"))
+
+    get_settings.cache_clear()
+
+    assert response.status_code == 200
+    assert response.json()["text"] == "Resposta real da Lyra"
+
+
+def test_workspace_addon_message_payload_falls_back_when_openclaw_forward_fails(monkeypatch):
+    async def fake_forward_to_openclaw(**kwargs):
+        raise openclaw_forward.OpenClawForwardError("boom")
+
+    monkeypatch.setattr(googlechat_router, "forward_to_openclaw", fake_forward_to_openclaw)
+
+    get_settings.cache_clear()
+    monkeypatch.setenv("OPENCLAW_FORWARD_ENABLED", "true")
+    monkeypatch.setenv("OPENCLAW_FORWARD_URL", "http://10.0.0.5:18789/googlechat")
+
+    client = TestClient(app)
+    response = client.post("/googlechat", json=_addon_payload("oi Lyra"))
+
+    get_settings.cache_clear()
+
+    assert response.status_code == 200
+    message = response.json()["hostAppDataAction"]["chatDataAction"]["createMessageAction"]["message"]
+    assert "handler principal" in message["text"]

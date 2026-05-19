@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     google_chat_dev_bypass_auth: bool = True
     openclaw_forward_enabled: bool = False
     openclaw_forward_url: str | None = None
+    openclaw_forward_timeout_seconds: float = 25.0
     mc_admin_shared_secret: str | None = None
 
     @property
