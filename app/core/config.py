@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     def is_prod(self) -> bool:
         return self.app_env.lower() in {"prod", "production"}
 
+    @property
+    def effective_mc_admin_secret(self) -> str:
+        if self.mc_admin_shared_secret:
+            return self.mc_admin_shared_secret
+        if not self.is_prod:
+            return "dev-admin-secret"
+        return ""
+
 
 @lru_cache
 def get_settings() -> Settings:

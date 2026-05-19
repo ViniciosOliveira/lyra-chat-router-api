@@ -14,6 +14,8 @@ Entregue até aqui:
 - Policy engine MVP com policy `mkt_performance_analysis_only`.
 - Bloqueio explícito de execução operacional.
 - Auditoria estruturada com fallback em log e persistência em PostgreSQL quando `DATABASE_URL` estiver configurado.
+- Admin interno mínimo: `/admin/spaces`, `/admin/routing-events`, `/admin/test/route`.
+- Auth admin via `X-MC-Admin-Secret`.
 - Migration SQL inicial e bootstrap SQL exemplo.
 - Smoke test local.
 
@@ -53,6 +55,32 @@ Em outro:
 ./deploy/smoke_test.sh http://127.0.0.1:3201
 ```
 
+## Admin interno
+
+Endpoints:
+
+- `GET /admin/spaces`
+- `GET /admin/routing-events`
+- `POST /admin/test/route`
+
+Autenticação:
+
+```bash
+-H 'X-MC-Admin-Secret: dev-admin-secret'
+```
+
+Em dev, se `MC_ADMIN_SHARED_SECRET` não estiver definido, o fallback é `dev-admin-secret`. Em produção, `MC_ADMIN_SHARED_SECRET` é obrigatório.
+
+Exemplo:
+
+```bash
+curl -fsS \
+  -H 'X-MC-Admin-Secret: dev-admin-secret' \
+  -H 'Content-Type: application/json' \
+  -d @tests/fixtures/googlechat_message.json \
+  http://127.0.0.1:3201/admin/test/route
+```
+
 ## Banco
 
 Database recomendado: `lyra_chat_router` no PostgreSQL existente.
@@ -71,4 +99,5 @@ Antes de produção:
 - `APP_ENV=prod`
 - `GOOGLE_CHAT_DEV_BYPASS_AUTH=false`
 - `GOOGLE_CHAT_AUDIENCE=https://api.grupooliveirarocha.com/googlechat/`
+- `MC_ADMIN_SHARED_SECRET` forte e fora do Git.
 - Não trocar o endpoint real do Google Chat antes do smoke test em staging.
