@@ -15,6 +15,14 @@ class Settings(BaseSettings):
     openclaw_forward_enabled: bool = False
     openclaw_forward_url: str | None = None
     openclaw_forward_timeout_seconds: float = 25.0
+    openclaw_agent_hook_enabled: bool = False
+    openclaw_agent_hook_url: str | None = None
+    openclaw_agent_hook_token: str | None = None
+    openclaw_agent_hook_agent_id: str = "main"
+    openclaw_agent_hook_timeout_seconds: int = 120
+    openclaw_agent_hook_request_timeout_seconds: float = 10.0
+    google_chat_pubsub_shared_secret: str | None = None
+    google_chat_bot_user: str | None = None
     mc_admin_shared_secret: str | None = None
 
     @property
