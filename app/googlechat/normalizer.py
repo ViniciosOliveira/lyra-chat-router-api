@@ -2,10 +2,17 @@ from app.googlechat.schemas import NormalizedChatEvent
 
 
 def normalize_event(payload: dict) -> NormalizedChatEvent:
-    event_type = payload.get("type") or payload.get("eventType") or "UNKNOWN"
-    space = payload.get("space") or {}
-    user = payload.get("user") or payload.get("message", {}).get("sender") or {}
-    message = payload.get("message") or {}
+    chat_payload = payload.get("chat") or {}
+    message_payload = chat_payload.get("messagePayload") or {}
+    message = payload.get("message") or message_payload.get("message") or {}
+    space = payload.get("space") or message_payload.get("space") or message.get("space") or {}
+    user = payload.get("user") or chat_payload.get("user") or message.get("sender") or {}
+    event_type = (
+        payload.get("type")
+        or payload.get("eventType")
+        or ("MESSAGE" if message_payload.get("message") else None)
+        or "UNKNOWN"
+    )
     thread = message.get("thread") or payload.get("thread") or {}
 
     return NormalizedChatEvent(

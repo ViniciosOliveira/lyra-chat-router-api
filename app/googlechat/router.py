@@ -13,6 +13,26 @@ from app.policies.engine import PolicyEngine
 router = APIRouter(prefix="/googlechat", tags=["googlechat"])
 
 
+def _is_workspace_addon_chat_event(payload: dict) -> bool:
+    chat_payload = payload.get("chat") or {}
+    return bool(chat_payload.get("messagePayload") or chat_payload.get("appCommandPayload"))
+
+
+def _format_google_chat_response(payload: dict, response: dict) -> dict:
+    if not _is_workspace_addon_chat_event(payload):
+        return response
+
+    return {
+        "hostAppDataAction": {
+            "chatDataAction": {
+                "createMessageAction": {
+                    "message": response,
+                }
+            }
+        }
+    }
+
+
 @router.get("/health")
 def health(settings: Settings = Depends(get_settings)) -> dict:
     return {"status": "ok", "service": settings.app_name}
@@ -40,4 +60,4 @@ async def receive_google_chat_event(
         response = build_direct_reply(event)
 
     AuditLogger().record_routing(event=event, decision=decision, response=response)
-    return response
+    return _format_google_chat_response(payload, response)
