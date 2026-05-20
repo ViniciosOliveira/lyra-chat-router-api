@@ -1,4 +1,5 @@
 import logging
+import re
 from typing import Any
 
 import requests
@@ -39,6 +40,23 @@ User message:
 """.strip()
 
 
+def _session_key_component(value: str | None, fallback: str) -> str:
+    raw = (value or fallback).strip().lower()
+    return re.sub(r"[^a-z0-9:/._-]+", "-", raw).strip("-") or fallback
+
+
+def build_session_key(*, settings: Settings, event: NormalizedChatEvent) -> str:
+    """Build a stable OpenClaw hook session key scoped by Google Chat space.
+
+    Use one session per space instead of one session per thread/message. This
+    keeps group continuity while preventing Pub/Sub traffic from falling into
+    the main session.
+    """
+    prefix = settings.openclaw_agent_hook_session_key_prefix.rstrip(":")
+    space = _session_key_component(event.space_name, "unknown-space")
+    return f"{prefix}:{space}"
+
+
 def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision: PolicyDecision) -> dict[str, Any]:
     if not settings.openclaw_agent_hook_url:
         raise OpenClawAgentHookError("OpenClaw agent hook URL is not configured")
@@ -49,6 +67,7 @@ def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision
         "message": _build_agent_message(event, decision),
         "name": "Google Chat Pub/Sub",
         "agentId": settings.openclaw_agent_hook_agent_id,
+        "sessionKey": build_session_key(settings=settings, event=event),
         "deliver": True,
         "channel": "googlechat",
         "to": event.space_name,

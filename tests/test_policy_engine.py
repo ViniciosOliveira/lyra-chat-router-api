@@ -5,6 +5,7 @@ from app.googlechat.normalizer import normalize_event
 from app.policies.engine import PolicyEngine
 
 OWNER = "users/108616006099141003473"
+JOAO_VICTOR = "users/100811886516332607168"
 
 
 def event_with_text(text: str, space: str = "spaces/AAQAiP4nKa4", user: str = OWNER):
@@ -19,6 +20,14 @@ def event_with_text(text: str, space: str = "spaces/AAQAiP4nKa4", user: str = OW
 
 def test_allows_marketing_analysis():
     decision = PolicyEngine().decide(event_with_text("Analisa o CPL do Google Ads"))
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.scope == "marketing_performance_analysis_only"
+
+
+def test_allows_joao_victor_marketing_analysis():
+    decision = PolicyEngine().decide(event_with_text("Analisa o CPL do Google Ads", user=JOAO_VICTOR))
 
     assert decision.decision == "allow"
     assert decision.handler == "analytics_handler"

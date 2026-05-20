@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     openclaw_agent_hook_url: str | None = None
     openclaw_agent_hook_token: str | None = None
     openclaw_agent_hook_agent_id: str = "main"
+    openclaw_agent_hook_session_key_prefix: str = "hook:googlechat"
     openclaw_agent_hook_timeout_seconds: int = 120
     openclaw_agent_hook_request_timeout_seconds: float = 10.0
     google_chat_pubsub_shared_secret: str | None = None

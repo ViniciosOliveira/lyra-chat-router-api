@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
 from app.handlers import openclaw_agent_hook
+from app.handlers.openclaw_agent_hook import build_session_key
 from app.main import app
 
 
@@ -93,6 +94,26 @@ def test_pubsub_endpoint_ignores_bot_messages(monkeypatch):
     get_settings.cache_clear()
     assert response.status_code == 200
     assert response.json()["reason"] == "bot_message"
+
+
+def test_pubsub_session_key_is_scoped_by_space(monkeypatch):
+    _set_pubsub_env(monkeypatch, hook_enabled=True)
+    settings = get_settings()
+    event = openclaw_agent_hook.NormalizedChatEvent(
+        event_type="google.workspace.chat.message.v1.created",
+        space_name="spaces/AAQAiP4nKa4",
+        space_display_name="Comitê de Mkt Performance",
+        thread_name="spaces/AAQAiP4nKa4/threads/test",
+        message_name="spaces/AAQAiP4nKa4/messages/test-pubsub",
+        user_name="users/108616006099141003473",
+        user_display_name="Vinícios Oliveira",
+        user_email=None,
+        text="Analisa o CPL",
+        raw={},
+    )
+
+    assert build_session_key(settings=settings, event=event) == "hook:googlechat:spaces/aaqaip4nka4"
+    get_settings.cache_clear()
 
 
 def test_pubsub_endpoint_enqueues_openclaw_agent_hook(monkeypatch):

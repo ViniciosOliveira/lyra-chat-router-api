@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 OWNER_USER = "users/108616006099141003473"
+JOAO_VICTOR_USER = "users/100811886516332607168"
 
 MKT_PERFORMANCE_SPACE = "spaces/AAQAiP4nKa4"
 MKT_PERFORMANCE_POLICY_KEY = "mkt_performance_analysis_only"
@@ -82,7 +83,7 @@ SPACE_POLICIES: dict[str, SpacePolicy] = {
     MKT_PERFORMANCE_SPACE: SpacePolicy(
         key=MKT_PERFORMANCE_POLICY_KEY,
         label="Comitê de Mkt Performance",
-        allowed_users=frozenset({OWNER_USER}),
+        allowed_users=frozenset({OWNER_USER, JOAO_VICTOR_USER}),
         scope="marketing_performance_analysis_only",
     ),
 }
