@@ -49,6 +49,12 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
 - If the scope is unclear, stop and ask for clarification instead of guessing."""
 
 
+def _timeout_seconds_for_space(*, settings: Settings, decision: PolicyDecision) -> int:
+    if decision.scope == "dev_owner_only":
+        return max(settings.openclaw_agent_hook_timeout_seconds, 900)
+    return settings.openclaw_agent_hook_timeout_seconds
+
+
 def _build_agent_message(event: NormalizedChatEvent, decision: PolicyDecision) -> str:
     rules = _rules_for_space(event, decision)
 
@@ -103,7 +109,7 @@ def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision
         "deliver": True,
         "channel": "googlechat",
         "to": event.space_name,
-        "timeoutSeconds": settings.openclaw_agent_hook_timeout_seconds,
+        "timeoutSeconds": _timeout_seconds_for_space(settings=settings, decision=decision),
     }
     if event.thread_name:
         payload["threadId"] = event.thread_name

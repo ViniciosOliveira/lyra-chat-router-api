@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
 from app.handlers import openclaw_agent_hook
-from app.handlers.openclaw_agent_hook import _build_agent_message, build_session_key
+from app.handlers.openclaw_agent_hook import _build_agent_message, _timeout_seconds_for_space, build_session_key
 from app.policies.engine import Intent, PolicyDecision
 from app.main import app
 
@@ -173,6 +173,34 @@ def test_agent_hook_message_keeps_mkt_performance_analysis_only_rules():
     assert "Comitê de Mkt Performance is analysis-only" in message
     assert "You must not execute campaign, budget, tag, pixel, code, deploy" in message
     assert "Dev / Mission Control is an operational development space" not in message
+
+
+def test_agent_hook_timeout_is_extended_for_dev_space():
+    settings = get_settings()
+    decision = PolicyDecision(
+        policy_key="dev_group",
+        intent=Intent.UNKNOWN,
+        decision="allow",
+        handler="openclaw_agent_hook",
+        reason="Dev owner allowed",
+        scope="dev_owner_only",
+    )
+
+    assert _timeout_seconds_for_space(settings=settings, decision=decision) >= 900
+
+
+def test_agent_hook_timeout_keeps_default_for_marketing_space():
+    settings = get_settings()
+    decision = PolicyDecision(
+        policy_key="mkt_performance_analysis_only",
+        intent=Intent.METRIC_EXPLANATION,
+        decision="allow",
+        handler="analytics_handler",
+        reason="Analysis/reporting scope allowed",
+        scope="marketing_performance_analysis_only",
+    )
+
+    assert _timeout_seconds_for_space(settings=settings, decision=decision) == settings.openclaw_agent_hook_timeout_seconds
 
 
 def test_pubsub_endpoint_enqueues_openclaw_agent_hook(monkeypatch):
