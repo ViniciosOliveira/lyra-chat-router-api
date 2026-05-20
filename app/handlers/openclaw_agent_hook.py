@@ -16,7 +16,42 @@ class OpenClawAgentHookError(RuntimeError):
     pass
 
 
+def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> str:
+    if decision.scope == "marketing_performance_analysis_only":
+        return """- Comitê de Mkt Performance is analysis-only.
+- You may analyze, diagnose, explain metrics, produce reports and recommendations.
+- You must not execute campaign, budget, tag, pixel, code, deploy, permission, or external-send changes.
+- If the user asks for execution, refuse briefly and offer analysis/recommendation instead."""
+
+    if decision.scope == "dev_owner_only":
+        return """- Dev / Mission Control is an operational development space for Vinícios.
+- If Vinícios explicitly authorizes execution (for example: "pode seguir"), you may inspect code, edit files, run tests/builds, commit, deploy, and validate according to the project documentation.
+- Before technical action, identify the system named by the user and load the relevant docs/memory first.
+- Do not apply the Marketing Performance analysis-only restriction in this space."""
+
+    if decision.scope == "turnstile_only":
+        return """- This space is restricted to Control iD turnstile operations only.
+- Load the turnstile skill/documentation before acting.
+- Refuse anything unrelated to turnstile control."""
+
+    if decision.scope == "certificates_correios_only":
+        return """- This space is restricted to certificate signing and Correios label generation.
+- Load the matching operational skill before acting.
+- Refuse anything outside certificates or Correios labels."""
+
+    if decision.scope == "general_owner_only":
+        return """- This is an owner-only space for Vinícios.
+- Follow the normal Lyra/OpenClaw rules for the requested task.
+- Load relevant docs before technical, operational, external, or destructive actions."""
+
+    return f"""- Scope from policy: {decision.scope}.
+- Follow the policy scope above and the normal Lyra/OpenClaw safety/documentation rules.
+- If the scope is unclear, stop and ask for clarification instead of guessing."""
+
+
 def _build_agent_message(event: NormalizedChatEvent, decision: PolicyDecision) -> str:
+    rules = _rules_for_space(event, decision)
+
     return f"""Google Chat message received via Lyra Chat Router Pub/Sub subscription.
 
 Context:
@@ -30,10 +65,7 @@ Context:
 - Reason: {decision.reason}
 
 Rules for this space:
-- Comitê de Mkt Performance is analysis-only.
-- You may analyze, diagnose, explain metrics, produce reports and recommendations.
-- You must not execute campaign, budget, tag, pixel, code, deploy, permission, or external-send changes.
-- If the user asks for execution, refuse briefly and offer analysis/recommendation instead.
+{rules}
 
 User message:
 {event.text}

@@ -5,7 +5,8 @@ from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
 from app.handlers import openclaw_agent_hook
-from app.handlers.openclaw_agent_hook import build_session_key
+from app.handlers.openclaw_agent_hook import _build_agent_message, build_session_key
+from app.policies.engine import Intent, PolicyDecision
 from app.main import app
 
 
@@ -114,6 +115,64 @@ def test_pubsub_session_key_is_scoped_by_space(monkeypatch):
 
     assert build_session_key(settings=settings, event=event) == "hook:googlechat:spaces/aaqaip4nka4"
     get_settings.cache_clear()
+
+
+def test_agent_hook_message_uses_dev_rules_for_dev_space():
+    event = openclaw_agent_hook.NormalizedChatEvent(
+        event_type="google.workspace.chat.message.v1.created",
+        space_name="spaces/AAQAKE4s-Ko",
+        space_display_name="Comitê - Desenvolvimento",
+        thread_name="spaces/AAQAKE4s-Ko/threads/test",
+        message_name="spaces/AAQAKE4s-Ko/messages/test-pubsub",
+        user_name="users/108616006099141003473",
+        user_display_name="Vinícios Oliveira",
+        user_email=None,
+        text="pode seguir",
+        raw={},
+    )
+    decision = PolicyDecision(
+        policy_key="dev_group",
+        intent=Intent.UNKNOWN,
+        decision="allow",
+        handler="openclaw_agent_hook",
+        reason="Dev owner allowed",
+        scope="dev_owner_only",
+    )
+
+    message = _build_agent_message(event, decision)
+
+    assert "Dev / Mission Control is an operational development space" in message
+    assert "you may inspect code, edit files, run tests/builds, commit, deploy" in message
+    assert "Comitê de Mkt Performance is analysis-only" not in message
+
+
+def test_agent_hook_message_keeps_mkt_performance_analysis_only_rules():
+    event = openclaw_agent_hook.NormalizedChatEvent(
+        event_type="google.workspace.chat.message.v1.created",
+        space_name="spaces/AAQAiP4nKa4",
+        space_display_name="Comitê de Mkt Performance",
+        thread_name="spaces/AAQAiP4nKa4/threads/test",
+        message_name="spaces/AAQAiP4nKa4/messages/test-pubsub",
+        user_name="users/108616006099141003473",
+        user_display_name="Vinícios Oliveira",
+        user_email=None,
+        text="Analisa o CPL",
+        raw={},
+    )
+    decision = PolicyDecision(
+        policy_key="mkt_performance_analysis_only",
+        intent=Intent.METRIC_EXPLANATION,
+        decision="allow",
+        handler="analytics_handler",
+        reason="Analysis/reporting scope allowed",
+        scope="marketing_performance_analysis_only",
+    )
+
+    message = _build_agent_message(event, decision)
+
+    assert "Comitê de Mkt Performance is analysis-only" in message
+    assert "You must not execute campaign, budget, tag, pixel, code, deploy" in message
+    assert "Dev / Mission Control is an operational development space" not in message
 
 
 def test_pubsub_endpoint_enqueues_openclaw_agent_hook(monkeypatch):
