@@ -24,7 +24,8 @@ def test_googlechat_post_denies_operational_change_in_dev_mode():
     response = client.post("/googlechat/", json=payload)
 
     assert response.status_code == 200
-    assert "só posso fazer análises" in response.json()["text"]
+    assert "fora do escopo permitido" in response.json()["text"]
+    assert "Vou verificar com o Vinícios" in response.json()["text"]
 
 
 def test_googlechat_post_allows_owner_dm_space_in_dev_mode():
@@ -66,4 +67,5 @@ def test_googlechat_post_scoped_group_denies_out_of_scope_in_dev_mode():
     response = client.post("/googlechat/", json=payload)
 
     assert response.status_code == 200
-    assert "assinatura de certificados digitais" in response.json()["text"]
+    assert "fora do escopo permitido" in response.json()["text"]
+    assert "Vou verificar com o Vinícios" in response.json()["text"]

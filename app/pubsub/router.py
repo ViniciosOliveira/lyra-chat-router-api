@@ -10,7 +10,11 @@ from app.audit.logger import AuditLogger
 from app.core.config import Settings, get_settings
 from app.db.session import get_engine
 from app.googlechat.schemas import NormalizedChatEvent
-from app.handlers.openclaw_agent_hook import OpenClawAgentHookError, enqueue_openclaw_agent_turn
+from app.handlers.openclaw_agent_hook import (
+    OpenClawAgentHookError,
+    enqueue_openclaw_agent_turn,
+    notify_owner_about_out_of_scope,
+)
 from app.policies.engine import PolicyEngine
 
 logger = logging.getLogger(__name__)
@@ -146,13 +150,20 @@ async def receive_pubsub_event(
 
     decision = PolicyEngine().decide(event)
     if decision.decision != "allow":
-        # Unknown/unauthorized spaces are acknowledged but not answered.
+        escalation_status = "disabled"
+        if settings.openclaw_agent_hook_enabled:
+            try:
+                await notify_owner_about_out_of_scope(settings=settings, event=event, decision=decision)
+                escalation_status = "queued"
+            except OpenClawAgentHookError:
+                logger.exception("pubsub_owner_escalation_failed")
+                escalation_status = "failed"
         AuditLogger().record_routing(
             event=event,
             decision=decision,
-            response={"status": "ignored", "reason": decision.reason},
+            response={"status": "denied", "reason": decision.reason, "owner_escalation": escalation_status},
         )
-        return {"status": "ignored", "reason": decision.reason}
+        return {"status": "denied", "reason": decision.reason, "owner_escalation": escalation_status}
 
     if not settings.openclaw_agent_hook_enabled:
         AuditLogger().record_routing(

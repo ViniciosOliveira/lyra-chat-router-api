@@ -2,11 +2,17 @@ from app.policies.engine import PolicyDecision
 
 
 SCOPED_DENY_TEXT = {
-    "turnstile_only": "Só posso ajudar com controle de catraca neste grupo.",
-    "certificates_correios_only": "Só posso ajudar neste grupo com assinatura de certificados digitais e emissão de etiquetas dos Correios.",
+    "turnstile_only": (
+        "Essa solicitação está fora do escopo permitido para este grupo. "
+        "Vou verificar com o Vinícios antes de avançar."
+    ),
+    "certificates_correios_only": (
+        "Essa solicitação está fora do escopo permitido para este grupo. "
+        "Vou verificar com o Vinícios antes de avançar."
+    ),
     "marketing_performance_analysis_only": (
-        "Neste grupo eu só posso fazer análises e relatórios. "
-        "Alterações operacionais dependem de autorização explícita do Vinícios fora do fluxo comum."
+        "Essa solicitação está fora do escopo permitido para este grupo. "
+        "Vou verificar com o Vinícios antes de avançar."
     ),
 }
 

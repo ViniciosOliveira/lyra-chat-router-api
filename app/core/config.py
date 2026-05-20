@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     openclaw_agent_hook_request_timeout_seconds: float = 10.0
     google_chat_pubsub_shared_secret: str | None = None
     google_chat_bot_user: str | None = None
+    google_chat_owner_space: str = "spaces/mqWtpSAAAAE"
     mc_admin_shared_secret: str | None = None
 
     @property

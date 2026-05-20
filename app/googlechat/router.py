@@ -7,6 +7,7 @@ from app.googlechat.normalizer import normalize_event
 from app.handlers.analytics import build_analytics_response
 from app.handlers.deny import build_deny_response
 from app.handlers.direct_reply import build_direct_reply
+from app.handlers.openclaw_agent_hook import OpenClawAgentHookError, notify_owner_about_out_of_scope
 from app.handlers.openclaw_forward import OpenClawForwardError, forward_to_openclaw
 from app.handlers.scoped_operation import build_scoped_operation_response
 from app.policies.engine import PolicyEngine
@@ -53,6 +54,12 @@ async def receive_google_chat_event(
 
     if decision.handler == "deny_handler":
         response = build_deny_response(decision)
+        if settings.openclaw_agent_hook_enabled:
+            try:
+                await notify_owner_about_out_of_scope(settings=settings, event=event, decision=decision)
+            except OpenClawAgentHookError:
+                # Best-effort escalation: never break the user-visible denial response.
+                pass
     elif settings.openclaw_forward_enabled:
         try:
             response = await forward_to_openclaw(

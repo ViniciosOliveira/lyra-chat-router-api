@@ -95,24 +95,11 @@ def build_session_key(*, settings: Settings, event: NormalizedChatEvent) -> str:
     return f"{prefix}:{space}"
 
 
-def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision: PolicyDecision) -> dict[str, Any]:
+def _post_agent_hook_payload(*, settings: Settings, payload: dict[str, Any]) -> dict[str, Any]:
     if not settings.openclaw_agent_hook_url:
         raise OpenClawAgentHookError("OpenClaw agent hook URL is not configured")
     if not settings.openclaw_agent_hook_token:
         raise OpenClawAgentHookError("OpenClaw agent hook token is not configured")
-
-    payload: dict[str, Any] = {
-        "message": _build_agent_message(event, decision),
-        "name": "Google Chat Pub/Sub",
-        "agentId": settings.openclaw_agent_hook_agent_id,
-        "sessionKey": build_session_key(settings=settings, event=event),
-        "deliver": True,
-        "channel": "googlechat",
-        "to": event.space_name,
-        "timeoutSeconds": _timeout_seconds_for_space(settings=settings, decision=decision),
-    }
-    if event.thread_name:
-        payload["threadId"] = event.thread_name
 
     response = requests.post(
         settings.openclaw_agent_hook_url,
@@ -136,6 +123,51 @@ def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision
     return data
 
 
+def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision: PolicyDecision) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "message": _build_agent_message(event, decision),
+        "name": "Google Chat Pub/Sub",
+        "agentId": settings.openclaw_agent_hook_agent_id,
+        "sessionKey": build_session_key(settings=settings, event=event),
+        "deliver": True,
+        "channel": "googlechat",
+        "to": event.space_name,
+        "timeoutSeconds": _timeout_seconds_for_space(settings=settings, decision=decision),
+    }
+    if event.thread_name:
+        payload["threadId"] = event.thread_name
+    return _post_agent_hook_payload(settings=settings, payload=payload)
+
+
+def _build_owner_escalation_message(event: NormalizedChatEvent, decision: PolicyDecision) -> str:
+    return f"""Pedido fora do escopo recebido no Google Chat.
+
+Grupo/space: {event.space_display_name or event.space_name or 'desconhecido'}
+Usuário: {event.user_display_name or event.user_name or 'desconhecido'}
+Escopo: {decision.scope}
+Intent detectada: {decision.intent.value}
+Motivo do bloqueio: {decision.reason}
+
+Mensagem original:
+{event.text}
+
+Você autoriza eu tratar isso como exceção, ajustar a regra, ou manter bloqueado?""".strip()
+
+
+def _post_owner_escalation(*, settings: Settings, event: NormalizedChatEvent, decision: PolicyDecision) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "message": _build_owner_escalation_message(event, decision),
+        "name": "Google Chat Policy Escalation",
+        "agentId": settings.openclaw_agent_hook_agent_id,
+        "sessionKey": f"{settings.openclaw_agent_hook_session_key_prefix.rstrip(':')}:policy-escalations",
+        "deliver": True,
+        "channel": "googlechat",
+        "to": settings.google_chat_owner_space,
+        "timeoutSeconds": min(_timeout_seconds_for_space(settings=settings, decision=decision), 120),
+    }
+    return _post_agent_hook_payload(settings=settings, payload=payload)
+
+
 async def enqueue_openclaw_agent_turn(
     *, settings: Settings, event: NormalizedChatEvent, decision: PolicyDecision
 ) -> dict[str, Any]:
@@ -151,3 +183,20 @@ async def enqueue_openclaw_agent_turn(
     except Exception as exc:  # pragma: no cover - defensive network boundary
         logger.exception("openclaw_agent_hook_failed")
         raise OpenClawAgentHookError("OpenClaw agent hook failed") from exc
+
+
+async def notify_owner_about_out_of_scope(
+    *, settings: Settings, event: NormalizedChatEvent, decision: PolicyDecision
+) -> dict[str, Any]:
+    try:
+        return await run_in_threadpool(
+            _post_owner_escalation,
+            settings=settings,
+            event=event,
+            decision=decision,
+        )
+    except OpenClawAgentHookError:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive network boundary
+        logger.exception("openclaw_owner_escalation_failed")
+        raise OpenClawAgentHookError("OpenClaw owner escalation failed") from exc
