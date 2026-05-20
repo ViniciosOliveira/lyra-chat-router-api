@@ -61,10 +61,25 @@ OPERATIONAL_SCOPE_KEYWORDS = {
 
 ANALYSIS_KEYWORDS = {
     Intent.PERFORMANCE_REPORT: ["relatório", "report", "resumo", "resultado"],
-    Intent.TRACKING_DIAGNOSIS: ["tracking", "utm", "pixel", "evento", "tag"],
+    Intent.TRACKING_DIAGNOSIS: ["tracking", "utm", "pixel", "evento", "tag", "atribuição", "atribuicao"],
     Intent.METRIC_EXPLANATION: ["cpl", "cac", "roas", "cpa", "ctr", "conversão"],
     Intent.RECOMMENDATION: ["recomenda", "o que fazer", "próximo passo", "sugere"],
-    Intent.MARKETING_ANALYSIS: ["analisa", "análise", "google ads", "meta ads", "performance"],
+    Intent.MARKETING_ANALYSIS: [
+        "analisa",
+        "análise",
+        "analise",
+        "google ads",
+        "meta ads",
+        "performance",
+        "campanha",
+        "campanhas",
+        "conta de anuncio",
+        "conta de anúncio",
+        "evolução",
+        "evolucao",
+        "curva de atribuição",
+        "curva de atribuicao",
+    ],
 }
 
 
@@ -73,10 +88,13 @@ def classify_intent(text: str) -> Intent:
     for intent, keywords in BLOCKING_KEYWORDS.items():
         if any(keyword in lowered for keyword in keywords):
             return intent
-    for intent, keywords in OPERATIONAL_SCOPE_KEYWORDS.items():
+    # Analysis must be evaluated before scoped operational keywords. In marketing
+    # contexts, words like "certificado" can describe the course/product or a
+    # purchase event, not certificate-signing execution.
+    for intent, keywords in ANALYSIS_KEYWORDS.items():
         if any(keyword in lowered for keyword in keywords):
             return intent
-    for intent, keywords in ANALYSIS_KEYWORDS.items():
+    for intent, keywords in OPERATIONAL_SCOPE_KEYWORDS.items():
         if any(keyword in lowered for keyword in keywords):
             return intent
     return Intent.UNKNOWN

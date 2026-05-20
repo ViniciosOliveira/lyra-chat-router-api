@@ -34,6 +34,18 @@ def test_allows_joao_victor_marketing_analysis():
     assert decision.scope == "marketing_performance_analysis_only"
 
 
+def test_allows_joao_victor_roas_campaign_question_with_certificado_context():
+    text = (
+        "Na conta de anuncio 343-194-0866 eu gostaria de saber a evolução do ROAS "
+        "ao longo do tempo das campanhas depois que compra certificado, dentro da curva de atribuição."
+    )
+    decision = PolicyEngine().decide(event_with_text(text, user=JOAO_VICTOR))
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.scope == "marketing_performance_analysis_only"
+
+
 def test_blocks_budget_change():
     decision = PolicyEngine().decide(event_with_text("Aumenta orçamento da campanha X"))
 
