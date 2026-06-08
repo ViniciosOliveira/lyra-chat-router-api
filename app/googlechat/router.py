@@ -38,8 +38,7 @@ def _format_google_chat_response(payload: dict, response: dict) -> dict:
 def _fallback_response() -> dict:
     return {
         "text": (
-            "Recebi a mensagem, mas o handler principal da Lyra está temporariamente "
-            "indisponível. O router seguro continua ativo."
+            "Recebi a mensagem. Estou processando e respondo aqui em seguida."
         )
     }
 

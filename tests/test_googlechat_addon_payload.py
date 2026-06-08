@@ -100,7 +100,7 @@ def test_workspace_addon_message_payload_falls_back_when_openclaw_forward_fails(
 
     assert response.status_code == 200
     message = response.json()["hostAppDataAction"]["chatDataAction"]["createMessageAction"]["message"]
-    assert "handler principal" in message["text"]
+    assert "Estou processando" in message["text"]
 
 
 def test_workspace_addon_message_payload_falls_back_when_openclaw_returns_empty_response(monkeypatch):
@@ -128,4 +128,4 @@ def test_workspace_addon_message_payload_falls_back_when_openclaw_returns_empty_
 
     assert response.status_code == 200
     message = response.json()["hostAppDataAction"]["chatDataAction"]["createMessageAction"]["message"]
-    assert "handler principal" in message["text"]
+    assert "Estou processando" in message["text"]
