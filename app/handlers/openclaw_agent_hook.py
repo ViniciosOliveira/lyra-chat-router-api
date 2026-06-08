@@ -8,6 +8,7 @@ from fastapi.concurrency import run_in_threadpool
 from app.core.config import Settings
 from app.googlechat.schemas import NormalizedChatEvent
 from app.policies.engine import PolicyDecision
+from app.policies.intents import Intent
 
 logger = logging.getLogger(__name__)
 
@@ -139,19 +140,38 @@ def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision
     return _post_agent_hook_payload(settings=settings, payload=payload)
 
 
-def _build_owner_escalation_message(event: NormalizedChatEvent, decision: PolicyDecision) -> str:
-    return f"""Pedido fora do escopo recebido no Google Chat.
+def should_escalate_to_owner(decision: PolicyDecision) -> bool:
+    """Only ask Vinícios when the router cannot decide safely by itself.
 
-Grupo/space: {event.space_display_name or event.space_name or 'desconhecido'}
-Usuário: {event.user_display_name or event.user_name or 'desconhecido'}
-Escopo: {decision.scope}
-Intent detectada: {decision.intent.value}
-Motivo do bloqueio: {decision.reason}
+    Clear policy decisions (blocked execution, unauthorized user, wrong scoped group)
+    should be handled directly without creating approval noise.
+    """
+    return decision.policy_key == "unknown_space" or decision.intent == Intent.UNKNOWN_OPERATIONAL_EXECUTION
+
+
+def _build_owner_escalation_message(event: NormalizedChatEvent, decision: PolicyDecision) -> str:
+    group = event.space_display_name or event.space_name or "desconhecido"
+    requester = event.user_display_name or event.user_name or "desconhecido"
+    return f"""APROVAÇÃO NECESSÁRIA — Lyra Chat Router não conseguiu decidir com segurança.
+
+Grupo/space: {group}
+Solicitante: {requester}
+User ID: {event.user_name or 'desconhecido'}
+Thread: {event.thread_name or 'desconhecida'}
+Mensagem ID: {event.message_name or 'desconhecida'}
 
 Mensagem original:
-{event.text}
+{event.text or '[sem texto]'}
 
-Você autoriza eu tratar isso como exceção, ajustar a regra, ou manter bloqueado?""".strip()
+Classificação:
+- Escopo: {decision.scope}
+- Intent detectada: {decision.intent.value}
+- Motivo: {decision.reason}
+
+Decisão necessária:
+Autoriza exceção, ajusto a regra do grupo, ou mantenho bloqueado?
+
+Ao responder para o Vinícios, preserve obrigatoriamente Grupo/space, Solicitante e Mensagem original.""".strip()
 
 
 def _post_owner_escalation(*, settings: Settings, event: NormalizedChatEvent, decision: PolicyDecision) -> dict[str, Any]:

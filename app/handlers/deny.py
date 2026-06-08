@@ -4,15 +4,15 @@ from app.policies.engine import PolicyDecision
 SCOPED_DENY_TEXT = {
     "turnstile_only": (
         "Essa solicitação está fora do escopo permitido para este grupo. "
-        "Vou verificar com o Vinícios antes de avançar."
+        "Posso ajudar apenas com operação de catraca aqui."
     ),
     "certificates_correios_only": (
         "Essa solicitação está fora do escopo permitido para este grupo. "
-        "Vou verificar com o Vinícios antes de avançar."
+        "Posso ajudar apenas com certificados ou etiquetas dos Correios aqui."
     ),
     "marketing_performance_analysis_only": (
         "Essa solicitação está fora do escopo permitido para este grupo. "
-        "Vou verificar com o Vinícios antes de avançar."
+        "Aqui eu posso fazer análises, diagnósticos, relatórios e recomendações; não executo mudanças operacionais."
     ),
 }
 

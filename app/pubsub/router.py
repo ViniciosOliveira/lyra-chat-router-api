@@ -14,6 +14,7 @@ from app.handlers.openclaw_agent_hook import (
     OpenClawAgentHookError,
     enqueue_openclaw_agent_turn,
     notify_owner_about_out_of_scope,
+    should_escalate_to_owner,
 )
 from app.policies.engine import PolicyEngine
 
@@ -151,7 +152,7 @@ async def receive_pubsub_event(
     decision = PolicyEngine().decide(event)
     if decision.decision != "allow":
         escalation_status = "disabled"
-        if settings.openclaw_agent_hook_enabled:
+        if settings.openclaw_agent_hook_enabled and should_escalate_to_owner(decision):
             try:
                 await notify_owner_about_out_of_scope(settings=settings, event=event, decision=decision)
                 escalation_status = "queued"

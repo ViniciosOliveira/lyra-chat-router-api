@@ -60,9 +60,24 @@ OPERATIONAL_SCOPE_KEYWORDS = {
 }
 
 ANALYSIS_KEYWORDS = {
-    Intent.PERFORMANCE_REPORT: ["relatório", "report", "resumo", "resultado"],
+    Intent.PERFORMANCE_REPORT: [
+        "relatório",
+        "report",
+        "resumo",
+        "resultado",
+        "lista",
+        "planilha",
+        "google sheets",
+        "sheet",
+        "dados",
+        "últimos 50 cursos",
+        "ultimos 50 cursos",
+        "certificados comprados",
+        "certificados vendidos",
+        "certificados emitidos",
+    ],
     Intent.TRACKING_DIAGNOSIS: ["tracking", "utm", "pixel", "evento", "tag", "atribuição", "atribuicao"],
-    Intent.METRIC_EXPLANATION: ["cpl", "cac", "roas", "cpa", "ctr", "conversão"],
+    Intent.METRIC_EXPLANATION: ["cpl", "cac", "roas", "cpa", "ctr", "conversão", "conversao", "taxa", "matrículas", "matriculas"],
     Intent.RECOMMENDATION: ["recomenda", "o que fazer", "próximo passo", "sugere"],
     Intent.MARKETING_ANALYSIS: [
         "analisa",

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from app.googlechat.schemas import NormalizedChatEvent
 from app.policies.intents import Intent, classify_intent
-from app.policies.registry import MKT_PERFORMANCE_POLICY_KEY, SpacePolicy, get_space_policy
+from app.policies.registry import CONTENT_CREATIVES_POLICY_KEY, MKT_PERFORMANCE_POLICY_KEY, SpacePolicy, get_space_policy
 
 ALLOWED_MKT_INTENTS = {
     Intent.MARKETING_ANALYSIS,
@@ -65,6 +65,9 @@ class PolicyEngine:
         if policy.key == MKT_PERFORMANCE_POLICY_KEY:
             return self._decide_mkt_performance(intent, policy)
 
+        if policy.key == CONTENT_CREATIVES_POLICY_KEY:
+            return self._decide_content_creatives(intent, policy)
+
         if policy.scope == "turnstile_only":
             return self._decide_scoped_operation(
                 intent=intent,
@@ -123,6 +126,26 @@ class PolicyEngine:
             decision="deny",
             handler="deny_handler",
             reason="Intent is outside Mkt Performance analysis scope",
+            scope=policy.scope,
+        )
+
+    @staticmethod
+    def _decide_content_creatives(intent: Intent, policy: SpacePolicy) -> PolicyDecision:
+        if intent in BLOCKED_MKT_INTENTS:
+            return PolicyDecision(
+                policy_key=policy.key,
+                intent=intent,
+                decision="deny",
+                handler="deny_handler",
+                reason="Operational execution is blocked in Content Creatives group",
+                scope=policy.scope,
+            )
+        return PolicyDecision(
+            policy_key=policy.key,
+            intent=intent,
+            decision="allow",
+            handler="direct_reply" if intent == Intent.UNKNOWN else "analytics_handler",
+            reason="Content and creative planning scope allowed",
             scope=policy.scope,
         )
 

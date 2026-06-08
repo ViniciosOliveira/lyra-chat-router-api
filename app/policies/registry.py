@@ -2,9 +2,13 @@ from dataclasses import dataclass
 
 OWNER_USER = "users/108616006099141003473"
 JOAO_VICTOR_USER = "users/100811886516332607168"
+RAFAEL_CAMARGO_USER = "users/101466515008395418981"
+RAQUEL_DUARTE_USER = "users/102763968224911184184"
 
 MKT_PERFORMANCE_SPACE = "spaces/AAQAiP4nKa4"
 MKT_PERFORMANCE_POLICY_KEY = "mkt_performance_analysis_only"
+CONTENT_CREATIVES_SPACE = "spaces/AAQATyNL6WE"
+CONTENT_CREATIVES_POLICY_KEY = "content_creatives_edune"
 
 
 @dataclass(frozen=True)
@@ -79,12 +83,18 @@ SPACE_POLICIES: dict[str, SpacePolicy] = {
         allowed_users=CERTIFICATE_ALLOWED_USERS,
         scope="certificates_correios_only",
     ),
-    # First business policy managed directly by the router.
+    # Business policies managed directly by the router.
     MKT_PERFORMANCE_SPACE: SpacePolicy(
         key=MKT_PERFORMANCE_POLICY_KEY,
         label="Comitê de Mkt Performance",
-        allowed_users=frozenset({OWNER_USER, JOAO_VICTOR_USER}),
+        allowed_users=frozenset({OWNER_USER, JOAO_VICTOR_USER, RAFAEL_CAMARGO_USER}),
         scope="marketing_performance_analysis_only",
+    ),
+    CONTENT_CREATIVES_SPACE: SpacePolicy(
+        key=CONTENT_CREATIVES_POLICY_KEY,
+        label="Criativos & Conteúdo — Edune",
+        allowed_users=frozenset({OWNER_USER, RAQUEL_DUARTE_USER}),
+        scope="content_creatives_edune",
     ),
 }
 

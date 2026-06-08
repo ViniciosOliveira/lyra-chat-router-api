@@ -15,6 +15,26 @@ class OpenClawForwardError(RuntimeError):
     pass
 
 
+def _has_visible_google_chat_response(data: dict[str, Any]) -> bool:
+    if not data:
+        return False
+
+    text = data.get("text")
+    if isinstance(text, str) and text.strip():
+        return True
+
+    return any(
+        data.get(key)
+        for key in (
+            "cards",
+            "cardsV2",
+            "accessoryWidgets",
+            "actionResponse",
+            "hostAppDataAction",
+        )
+    )
+
+
 def _build_forward_payload(payload: dict[str, Any], event: NormalizedChatEvent, decision: PolicyDecision) -> dict[str, Any]:
     """Forward the original Google Chat event plus router policy context.
 
@@ -77,6 +97,8 @@ def _post_to_openclaw(
 
     if not isinstance(data, dict):
         raise OpenClawForwardError("OpenClaw returned an unexpected response shape")
+    if not _has_visible_google_chat_response(data):
+        raise OpenClawForwardError("OpenClaw returned an empty Google Chat response")
     return data
 
 

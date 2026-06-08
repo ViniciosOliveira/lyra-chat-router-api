@@ -101,3 +101,31 @@ def test_workspace_addon_message_payload_falls_back_when_openclaw_forward_fails(
     assert response.status_code == 200
     message = response.json()["hostAppDataAction"]["chatDataAction"]["createMessageAction"]["message"]
     assert "handler principal" in message["text"]
+
+
+def test_workspace_addon_message_payload_falls_back_when_openclaw_returns_empty_response(monkeypatch):
+    class FakeResponse:
+        status_code = 200
+        text = "{}"
+
+        @staticmethod
+        def json():
+            return {}
+
+    def fake_post(*args, **kwargs):
+        return FakeResponse()
+
+    monkeypatch.setattr(openclaw_forward.requests, "post", fake_post)
+
+    get_settings.cache_clear()
+    monkeypatch.setenv("OPENCLAW_FORWARD_ENABLED", "true")
+    monkeypatch.setenv("OPENCLAW_FORWARD_URL", "http://10.0.0.5:18789/googlechat")
+
+    client = TestClient(app)
+    response = client.post("/googlechat", json=_addon_payload("oi Lyra"))
+
+    get_settings.cache_clear()
+
+    assert response.status_code == 200
+    message = response.json()["hostAppDataAction"]["chatDataAction"]["createMessageAction"]["message"]
+    assert "handler principal" in message["text"]

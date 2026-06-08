@@ -6,6 +6,8 @@ from app.policies.engine import PolicyEngine
 
 OWNER = "users/108616006099141003473"
 JOAO_VICTOR = "users/100811886516332607168"
+RAFAEL_CAMARGO = "users/101466515008395418981"
+RAQUEL_DUARTE = "users/102763968224911184184"
 
 
 def event_with_text(text: str, space: str = "spaces/AAQAiP4nKa4", user: str = OWNER):
@@ -34,6 +36,14 @@ def test_allows_joao_victor_marketing_analysis():
     assert decision.scope == "marketing_performance_analysis_only"
 
 
+def test_allows_rafael_camargo_marketing_analysis():
+    decision = PolicyEngine().decide(event_with_text("Analisa o CPL do Google Ads", user=RAFAEL_CAMARGO))
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.scope == "marketing_performance_analysis_only"
+
+
 def test_allows_joao_victor_roas_campaign_question_with_certificado_context():
     text = (
         "Na conta de anuncio 343-194-0866 eu gostaria de saber a evolução do ROAS "
@@ -44,6 +54,20 @@ def test_allows_joao_victor_roas_campaign_question_with_certificado_context():
     assert decision.decision == "allow"
     assert decision.handler == "analytics_handler"
     assert decision.scope == "marketing_performance_analysis_only"
+
+
+def test_allows_joao_victor_course_certificate_spreadsheet_report():
+    text = (
+        "preciso que me envie uma lista dos ultimos 50 cursos publicados na Unova. "
+        "Nome do Curso, URL, quantas matriculas, quantos certificados ja foram comprados, "
+        "taxa de matriculados para certificados. Me envie em Google Sheets"
+    )
+    decision = PolicyEngine().decide(event_with_text(text, user=JOAO_VICTOR))
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.scope == "marketing_performance_analysis_only"
+
 
 
 def test_blocks_budget_change():
@@ -112,3 +136,36 @@ def test_allows_correios_scope():
     assert decision.decision == "allow"
     assert decision.handler == "scoped_operation_handler"
     assert decision.scope == "certificates_correios_only"
+
+
+def test_allows_content_creatives_group():
+    decision = PolicyEngine().decide(
+        event_with_text("Cria 5 hooks para pós-graduação", space="spaces/AAQATyNL6WE")
+    )
+
+    assert decision.decision == "allow"
+    assert decision.policy_key == "content_creatives_edune"
+    assert decision.scope == "content_creatives_edune"
+
+
+def test_allows_raquel_in_content_creatives_group():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "Gera relatório completo dos criativos orgânicos e pagos",
+            space="spaces/AAQATyNL6WE",
+            user=RAQUEL_DUARTE,
+        )
+    )
+
+    assert decision.decision == "allow"
+    assert decision.scope == "content_creatives_edune"
+
+
+def test_blocks_operational_execution_in_content_creatives_group():
+    decision = PolicyEngine().decide(
+        event_with_text("Aumenta orçamento da campanha X", space="spaces/AAQATyNL6WE")
+    )
+
+    assert decision.decision == "deny"
+    assert decision.handler == "deny_handler"
+    assert decision.scope == "content_creatives_edune"
