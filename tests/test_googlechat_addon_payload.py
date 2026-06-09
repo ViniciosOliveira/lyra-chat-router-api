@@ -83,7 +83,7 @@ def test_workspace_addon_message_payload_forwards_to_openclaw_when_enabled(monke
     assert response.json()["text"] == "Resposta real da Lyra"
 
 
-def test_workspace_addon_message_payload_falls_back_when_openclaw_forward_fails(monkeypatch):
+def test_workspace_addon_message_payload_returns_no_content_when_openclaw_forward_fails(monkeypatch):
     async def fake_forward_to_openclaw(**kwargs):
         raise openclaw_forward.OpenClawForwardError("boom")
 
@@ -98,12 +98,11 @@ def test_workspace_addon_message_payload_falls_back_when_openclaw_forward_fails(
 
     get_settings.cache_clear()
 
-    assert response.status_code == 200
-    message = response.json()["hostAppDataAction"]["chatDataAction"]["createMessageAction"]["message"]
-    assert "Estou processando" in message["text"]
+    assert response.status_code == 204
+    assert response.content == b""
 
 
-def test_workspace_addon_message_payload_falls_back_when_openclaw_returns_empty_response(monkeypatch):
+def test_workspace_addon_message_payload_returns_no_content_when_openclaw_returns_empty_response(monkeypatch):
     class FakeResponse:
         status_code = 200
         text = "{}"
@@ -126,6 +125,5 @@ def test_workspace_addon_message_payload_falls_back_when_openclaw_returns_empty_
 
     get_settings.cache_clear()
 
-    assert response.status_code == 200
-    message = response.json()["hostAppDataAction"]["chatDataAction"]["createMessageAction"]["message"]
-    assert "Estou processando" in message["text"]
+    assert response.status_code == 204
+    assert response.content == b""
