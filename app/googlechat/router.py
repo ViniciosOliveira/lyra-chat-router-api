@@ -1,6 +1,4 @@
-from typing import Any
-
-from fastapi import APIRouter, Depends, Header, Request, Response
+from fastapi import APIRouter, Depends, Header, Request
 
 from app.audit.logger import AuditLogger
 from app.core.config import Settings, get_settings
@@ -48,7 +46,7 @@ async def receive_google_chat_event(
     request: Request,
     authorization: str | None = Header(default=None),
     settings: Settings = Depends(get_settings),
-) -> Any:
+) -> dict:
     await verify_google_chat_authorization(settings=settings, authorization=authorization)
     payload = await request.json()
     event = normalize_event(payload)
@@ -79,7 +77,7 @@ async def receive_google_chat_event(
                 decision=decision,
                 response={"status": "no_content", "reason": "openclaw_forward_failed"},
             )
-            return Response(status_code=204)
+            return {}
     elif decision.handler == "analytics_handler":
         response = build_analytics_response(event, decision)
     elif decision.handler == "scoped_operation_handler":
