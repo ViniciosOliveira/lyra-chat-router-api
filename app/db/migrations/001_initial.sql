@@ -96,6 +96,39 @@ CREATE TABLE IF NOT EXISTS handler_runs (
     finished_at timestamptz
 );
 
+CREATE TABLE IF NOT EXISTS delivery_ledger (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    provider_message_id text NOT NULL UNIQUE,
+    space_name text,
+    user_name text,
+    thread_name text,
+    message_text text,
+    status text NOT NULL DEFAULT 'received',
+    stage text NOT NULL DEFAULT 'received',
+    attempt_count integer NOT NULL DEFAULT 0,
+    duplicate_count integer NOT NULL DEFAULT 0,
+    last_error text,
+    request_redacted jsonb NOT NULL DEFAULT '{}'::jsonb,
+    response_redacted jsonb NOT NULL DEFAULT '{}'::jsonb,
+    received_at timestamptz NOT NULL DEFAULT now(),
+    forwarding_started_at timestamptz,
+    forwarded_at timestamptz,
+    delivered_at timestamptz,
+    failed_at timestamptz,
+    next_retry_at timestamptz,
+    alert_count integer NOT NULL DEFAULT 0,
+    last_alerted_at timestamptz,
+    created_at timestamptz NOT NULL DEFAULT now(),
+    updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_delivery_ledger_status_updated
+    ON delivery_ledger (status, updated_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_delivery_ledger_next_retry
+    ON delivery_ledger (next_retry_at)
+    WHERE next_retry_at IS NOT NULL;
+
 INSERT INTO policies (key, name, description, allowed_intents, blocked_intents, allowed_handlers)
 VALUES (
     'mkt_performance_analysis_only',

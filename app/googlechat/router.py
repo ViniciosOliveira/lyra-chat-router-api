@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Header, Request
 
 from app.audit.logger import AuditLogger
 from app.core.config import Settings, get_settings
+from app.delivery.ledger import DeliveryLedger
 from app.googlechat.auth import verify_google_chat_authorization
 from app.googlechat.normalizer import normalize_event
 from app.handlers.analytics import build_analytics_response
@@ -55,6 +56,11 @@ async def receive_google_chat_event(
     await verify_google_chat_authorization(settings=settings, authorization=authorization)
     payload = await request.json()
     event = normalize_event(payload)
+    delivery_ledger = DeliveryLedger()
+    delivery_state = delivery_ledger.record_received(event)
+    if delivery_state.already_completed:
+        return {}
+
     decision = PolicyEngine().decide(event)
 
     if decision.handler == "deny_handler":
@@ -67,6 +73,7 @@ async def receive_google_chat_event(
                 pass
     elif settings.openclaw_forward_enabled:
         try:
+            delivery_ledger.mark_forwarding(delivery_state.provider_message_id)
             response = await forward_to_openclaw(
                 settings=settings,
                 payload=payload,
@@ -74,16 +81,25 @@ async def receive_google_chat_event(
                 decision=decision,
                 authorization=authorization,
             )
+            if response:
+                delivery_ledger.mark_delivered(delivery_state.provider_message_id, response)
+            else:
+                delivery_ledger.mark_forwarded(delivery_state.provider_message_id, response)
             AuditLogger().record_routing(event=event, decision=decision, response=response)
             return response
-        except OpenClawForwardError:
+        except OpenClawForwardError as exc:
             fallback_response = None
+            delivery_ledger.mark_retry_pending(delivery_state.provider_message_id, error=str(exc))
             if settings.openclaw_agent_hook_enabled:
                 try:
                     fallback_response = await enqueue_openclaw_forward_fallback(
                         settings=settings,
                         event=event,
                         decision=decision,
+                    )
+                    delivery_ledger.mark_fallback_queued(
+                        delivery_state.provider_message_id,
+                        fallback_response,
                     )
                 except OpenClawAgentHookError:
                     fallback_response = {"status": "failed"}
@@ -104,5 +120,6 @@ async def receive_google_chat_event(
     else:
         response = build_direct_reply(event)
 
+    delivery_ledger.mark_delivered(delivery_state.provider_message_id, response)
     AuditLogger().record_routing(event=event, decision=decision, response=response)
     return _format_google_chat_response(payload, response)

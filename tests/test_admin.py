@@ -42,6 +42,29 @@ def test_admin_routing_events_without_database_returns_empty_safe_payload():
     assert response.json() == {"mode": "no_database", "routing_events": []}
 
 
+def test_admin_delivery_stale_without_database_returns_empty_safe_payload():
+    client = TestClient(app)
+
+    response = client.get("/admin/delivery/stale", headers=ADMIN_HEADERS)
+
+    assert response.status_code == 200
+    assert response.json() == {"mode": "no_database", "deliveries": []}
+
+
+def test_admin_delivery_watchdog_without_database_returns_empty_safe_payload():
+    client = TestClient(app)
+
+    response = client.post("/admin/delivery/watchdog", headers=ADMIN_HEADERS)
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "mode": "no_database",
+        "stale_count": 0,
+        "alerted_count": 0,
+        "deliveries": [],
+    }
+
+
 def test_admin_test_route_allows_analysis():
     client = TestClient(app)
     payload = json.loads(Path("tests/fixtures/googlechat_message.json").read_text())

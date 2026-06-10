@@ -1,6 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
+from app.delivery.ledger import DeliveryState
 from app.googlechat import router as googlechat_router
 from app.handlers import openclaw_agent_hook, openclaw_forward
 from app.main import app
@@ -81,6 +82,40 @@ def test_workspace_addon_message_payload_forwards_to_openclaw_when_enabled(monke
 
     assert response.status_code == 200
     assert response.json()["text"] == "Resposta real da Lyra"
+
+
+def test_workspace_addon_message_payload_skips_completed_duplicate(monkeypatch):
+    class FakeDeliveryLedger:
+        def record_received(self, event):
+            assert event.message_name == "spaces/mqWtpSAAAAE/messages/test"
+            return DeliveryState(
+                mode="database",
+                provider_message_id=event.message_name,
+                status="delivered",
+                stage="googlechat_sync_response",
+                duplicate_count=1,
+            )
+
+        def mark_delivered(self, *args, **kwargs):
+            raise AssertionError("completed duplicate must not be delivered again")
+
+    async def fake_forward_to_openclaw(**kwargs):
+        raise AssertionError("completed duplicate must not be forwarded again")
+
+    monkeypatch.setattr(googlechat_router, "DeliveryLedger", FakeDeliveryLedger)
+    monkeypatch.setattr(googlechat_router, "forward_to_openclaw", fake_forward_to_openclaw)
+
+    get_settings.cache_clear()
+    monkeypatch.setenv("OPENCLAW_FORWARD_ENABLED", "true")
+    monkeypatch.setenv("OPENCLAW_FORWARD_URL", "http://10.0.0.5:18789/googlechat")
+
+    client = TestClient(app)
+    response = client.post("/googlechat", json=_addon_payload("oi Lyra"))
+
+    get_settings.cache_clear()
+
+    assert response.status_code == 200
+    assert response.json() == {}
 
 
 def test_workspace_addon_message_payload_returns_empty_ok_when_openclaw_forward_fails(monkeypatch):

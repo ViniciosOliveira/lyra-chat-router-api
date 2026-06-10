@@ -5,6 +5,7 @@ from sqlalchemy import text
 
 from app.admin.auth import verify_admin_secret
 from app.db.session import get_engine
+from app.delivery.ledger import DeliveryLedger
 from app.googlechat.normalizer import normalize_event
 from app.policies.engine import PolicyEngine
 
@@ -83,6 +84,35 @@ def list_routing_events(limit: int = 50) -> dict[str, Any]:
         ).mappings().all()
 
     return {"mode": "database", "routing_events": [dict(row) for row in rows]}
+
+
+@router.get("/delivery/stale")
+def list_stale_deliveries(older_than_seconds: int = 120, limit: int = 50) -> dict[str, Any]:
+    engine = get_engine()
+    if engine is None:
+        return _no_database_response("deliveries")
+
+    stale = DeliveryLedger().list_stale(older_than_seconds=older_than_seconds, limit=limit)
+    return {"mode": "database", "deliveries": stale}
+
+
+@router.post("/delivery/watchdog")
+def run_delivery_watchdog(older_than_seconds: int = 120, limit: int = 50) -> dict[str, Any]:
+    engine = get_engine()
+    if engine is None:
+        return {"mode": "no_database", "stale_count": 0, "alerted_count": 0, "deliveries": []}
+
+    ledger = DeliveryLedger()
+    stale = ledger.list_stale(older_than_seconds=older_than_seconds, limit=limit)
+    alerted_count = ledger.mark_alerted(
+        [str(row["provider_message_id"]) for row in stale if row.get("provider_message_id")]
+    )
+    return {
+        "mode": "database",
+        "stale_count": len(stale),
+        "alerted_count": alerted_count,
+        "deliveries": stale,
+    }
 
 
 @router.post("/test/route")
