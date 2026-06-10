@@ -5,7 +5,12 @@ from fastapi.testclient import TestClient
 
 from app.core.config import get_settings
 from app.handlers import openclaw_agent_hook
-from app.handlers.openclaw_agent_hook import _build_agent_message, _timeout_seconds_for_space, build_session_key
+from app.handlers.openclaw_agent_hook import (
+    _build_agent_message,
+    _timeout_seconds_for_space,
+    build_channel_session_key,
+    build_session_key,
+)
 from app.policies.engine import Intent, PolicyDecision
 from app.main import app
 
@@ -114,6 +119,29 @@ def test_pubsub_session_key_is_scoped_by_space(monkeypatch):
     )
 
     assert build_session_key(settings=settings, event=event) == "hook:googlechat:spaces/aaqaip4nka4"
+    get_settings.cache_clear()
+
+
+def test_forward_fallback_session_key_uses_hook_googlechat_fallback_namespace(monkeypatch):
+    _set_pubsub_env(monkeypatch, hook_enabled=True)
+    settings = get_settings()
+    event = openclaw_agent_hook.NormalizedChatEvent(
+        event_type="MESSAGE",
+        space_name="spaces/AAQAKE4s-Ko",
+        space_display_name="Comitê - Desenvolvimento",
+        thread_name="spaces/AAQAKE4s-Ko/threads/test",
+        message_name="spaces/AAQAKE4s-Ko/messages/test",
+        user_name="users/108616006099141003473",
+        user_display_name="Vinícios Oliveira",
+        user_email=None,
+        text="teste lyra",
+        raw={"space": {"name": "spaces/AAQAKE4s-Ko", "type": "SPACE"}},
+    )
+
+    assert (
+        build_channel_session_key(settings=settings, event=event)
+        == "hook:googlechat:fallback:spaces/aaqake4s-ko"
+    )
     get_settings.cache_clear()
 
 

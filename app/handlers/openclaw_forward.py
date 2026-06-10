@@ -97,8 +97,6 @@ def _post_to_openclaw(
 
     if not isinstance(data, dict):
         raise OpenClawForwardError("OpenClaw returned an unexpected response shape")
-    if not _has_visible_google_chat_response(data):
-        raise OpenClawForwardError("OpenClaw returned an empty Google Chat response")
     return data
 
 

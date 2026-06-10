@@ -96,6 +96,17 @@ def build_session_key(*, settings: Settings, event: NormalizedChatEvent) -> str:
     return f"{prefix}:{space}"
 
 
+def build_channel_session_key(*, settings: Settings, event: NormalizedChatEvent) -> str:
+    """Resolve a Google Chat hook session key for sync-forward fallback.
+
+    OpenClaw's hook endpoint only accepts `hook:`-prefixed session keys. Use a
+    dedicated fallback namespace so this path never reactivates Pub/Sub traffic.
+    """
+    prefix = settings.openclaw_agent_hook_session_key_prefix.rstrip(":")
+    space = _session_key_component(event.space_name, "unknown-space")
+    return f"{prefix}:fallback:{space}"
+
+
 def _post_agent_hook_payload(*, settings: Settings, payload: dict[str, Any]) -> dict[str, Any]:
     if not settings.openclaw_agent_hook_url:
         raise OpenClawAgentHookError("OpenClaw agent hook URL is not configured")
@@ -130,6 +141,24 @@ def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision
         "name": "Google Chat Pub/Sub",
         "agentId": settings.openclaw_agent_hook_agent_id,
         "sessionKey": build_session_key(settings=settings, event=event),
+        "deliver": True,
+        "channel": "googlechat",
+        "to": event.space_name,
+        "timeoutSeconds": _timeout_seconds_for_space(settings=settings, decision=decision),
+    }
+    if event.thread_name:
+        payload["threadId"] = event.thread_name
+    return _post_agent_hook_payload(settings=settings, payload=payload)
+
+
+def _post_forward_fallback_hook(
+    *, settings: Settings, event: NormalizedChatEvent, decision: PolicyDecision
+) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "message": _build_agent_message(event, decision),
+        "name": "Google Chat Forward Fallback",
+        "agentId": settings.openclaw_agent_hook_agent_id,
+        "sessionKey": build_channel_session_key(settings=settings, event=event),
         "deliver": True,
         "channel": "googlechat",
         "to": event.space_name,
@@ -203,6 +232,23 @@ async def enqueue_openclaw_agent_turn(
     except Exception as exc:  # pragma: no cover - defensive network boundary
         logger.exception("openclaw_agent_hook_failed")
         raise OpenClawAgentHookError("OpenClaw agent hook failed") from exc
+
+
+async def enqueue_openclaw_forward_fallback(
+    *, settings: Settings, event: NormalizedChatEvent, decision: PolicyDecision
+) -> dict[str, Any]:
+    try:
+        return await run_in_threadpool(
+            _post_forward_fallback_hook,
+            settings=settings,
+            event=event,
+            decision=decision,
+        )
+    except OpenClawAgentHookError:
+        raise
+    except Exception as exc:  # pragma: no cover - defensive network boundary
+        logger.exception("openclaw_forward_fallback_failed")
+        raise OpenClawAgentHookError("OpenClaw forward fallback failed") from exc
 
 
 async def notify_owner_about_out_of_scope(

@@ -7,7 +7,12 @@ from app.googlechat.normalizer import normalize_event
 from app.handlers.analytics import build_analytics_response
 from app.handlers.deny import build_deny_response
 from app.handlers.direct_reply import build_direct_reply
-from app.handlers.openclaw_agent_hook import OpenClawAgentHookError, notify_owner_about_out_of_scope, should_escalate_to_owner
+from app.handlers.openclaw_agent_hook import (
+    OpenClawAgentHookError,
+    enqueue_openclaw_forward_fallback,
+    notify_owner_about_out_of_scope,
+    should_escalate_to_owner,
+)
 from app.handlers.openclaw_forward import OpenClawForwardError, forward_to_openclaw
 from app.handlers.scoped_operation import build_scoped_operation_response
 from app.policies.engine import PolicyEngine
@@ -72,10 +77,24 @@ async def receive_google_chat_event(
             AuditLogger().record_routing(event=event, decision=decision, response=response)
             return response
         except OpenClawForwardError:
+            fallback_response = None
+            if settings.openclaw_agent_hook_enabled:
+                try:
+                    fallback_response = await enqueue_openclaw_forward_fallback(
+                        settings=settings,
+                        event=event,
+                        decision=decision,
+                    )
+                except OpenClawAgentHookError:
+                    fallback_response = {"status": "failed"}
             AuditLogger().record_routing(
                 event=event,
                 decision=decision,
-                response={"status": "no_content", "reason": "openclaw_forward_failed"},
+                response={
+                    "status": "no_content",
+                    "reason": "openclaw_forward_failed",
+                    "fallback": fallback_response or {"status": "disabled"},
+                },
             )
             return {}
     elif decision.handler == "analytics_handler":
