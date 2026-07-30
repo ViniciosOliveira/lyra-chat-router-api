@@ -24,10 +24,17 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
 - You must not execute campaign, budget, tag, pixel, code, deploy, permission, or external-send changes.
 - If the user asks for execution, refuse briefly and offer analysis/recommendation instead."""
 
-    if decision.scope == "dev_owner_only":
-        return """- Dev / Mission Control is an operational development space for Vinícios.
+    if decision.scope == "crm_dev_owner_only":
+        return """- Dev - CRM is an operational development space exclusively for the autonomous CRM product.
+- Load memory/projects/crm/README.md, memory/projects/crm-api/README.md, decisions and lessons before technical work.
+- Do not treat Mission Control source, routes, API or deploy as the CRM source of truth.
+- If Vinícios explicitly authorizes execution (for example: "pode seguir"), you may inspect CRM code, edit files, run tests/builds, commit, deploy, and validate according to the CRM documentation."""
+
+    if decision.scope == "mission_control_dev_owner_only":
+        return """- Dev - Mission Control is an operational development space exclusively for Mission Control.
+- Load memory/projects/mission-control/README.md, memory/projects/mission-control-api/README.md, decisions and lessons before technical work.
+- Do not implement operational CRM behavior inside Mission Control; integrations must use formal contracts.
 - If Vinícios explicitly authorizes execution (for example: "pode seguir"), you may inspect code, edit files, run tests/builds, commit, deploy, and validate according to the project documentation.
-- Before technical action, identify the system named by the user and load the relevant docs/memory first.
 - Do not apply the Marketing Performance analysis-only restriction in this space."""
 
     if decision.scope == "turnstile_only":
@@ -51,7 +58,7 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
 
 
 def _timeout_seconds_for_space(*, settings: Settings, decision: PolicyDecision) -> int:
-    if decision.scope == "dev_owner_only":
+    if decision.scope in {"crm_dev_owner_only", "mission_control_dev_owner_only"}:
         return max(settings.openclaw_agent_hook_timeout_seconds, 900)
     return settings.openclaw_agent_hook_timeout_seconds
 

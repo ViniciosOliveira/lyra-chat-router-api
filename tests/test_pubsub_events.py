@@ -145,11 +145,11 @@ def test_forward_fallback_session_key_uses_hook_googlechat_fallback_namespace(mo
     get_settings.cache_clear()
 
 
-def test_agent_hook_message_uses_dev_rules_for_dev_space():
+def test_agent_hook_message_uses_crm_rules_for_crm_dev_space():
     event = openclaw_agent_hook.NormalizedChatEvent(
         event_type="google.workspace.chat.message.v1.created",
         space_name="spaces/AAQAKE4s-Ko",
-        space_display_name="Comitê - Desenvolvimento",
+        space_display_name="Dev - CRM",
         thread_name="spaces/AAQAKE4s-Ko/threads/test",
         message_name="spaces/AAQAKE4s-Ko/messages/test-pubsub",
         user_name="users/108616006099141003473",
@@ -159,18 +159,47 @@ def test_agent_hook_message_uses_dev_rules_for_dev_space():
         raw={},
     )
     decision = PolicyDecision(
-        policy_key="dev_group",
+        policy_key="crm_dev_group",
         intent=Intent.UNKNOWN,
         decision="allow",
         handler="openclaw_agent_hook",
         reason="Dev owner allowed",
-        scope="dev_owner_only",
+        scope="crm_dev_owner_only",
     )
 
     message = _build_agent_message(event, decision)
 
-    assert "Dev / Mission Control is an operational development space" in message
-    assert "you may inspect code, edit files, run tests/builds, commit, deploy" in message
+    assert "Dev - CRM is an operational development space exclusively for the autonomous CRM product" in message
+    assert "Do not treat Mission Control source" in message
+    assert "Comitê de Mkt Performance is analysis-only" not in message
+
+
+def test_agent_hook_message_uses_mission_control_rules_for_mc_dev_space():
+    event = openclaw_agent_hook.NormalizedChatEvent(
+        event_type="google.workspace.chat.message.v1.created",
+        space_name="spaces/AAQAiUi_5No",
+        space_display_name="Dev - Mission Control",
+        thread_name="spaces/AAQAiUi_5No/threads/test",
+        message_name="spaces/AAQAiUi_5No/messages/test-pubsub",
+        user_name="users/108616006099141003473",
+        user_display_name="Vinícios Oliveira",
+        user_email=None,
+        text="pode seguir",
+        raw={},
+    )
+    decision = PolicyDecision(
+        policy_key="mission_control_dev_group",
+        intent=Intent.UNKNOWN,
+        decision="allow",
+        handler="openclaw_agent_hook",
+        reason="Dev owner allowed",
+        scope="mission_control_dev_owner_only",
+    )
+
+    message = _build_agent_message(event, decision)
+
+    assert "Dev - Mission Control is an operational development space exclusively for Mission Control" in message
+    assert "Do not implement operational CRM behavior inside Mission Control" in message
     assert "Comitê de Mkt Performance is analysis-only" not in message
 
 
@@ -200,18 +229,32 @@ def test_agent_hook_message_keeps_mkt_performance_analysis_only_rules():
 
     assert "Comitê de Mkt Performance is analysis-only" in message
     assert "You must not execute campaign, budget, tag, pixel, code, deploy" in message
-    assert "Dev / Mission Control is an operational development space" not in message
+    assert "operational development space exclusively" not in message
 
 
-def test_agent_hook_timeout_is_extended_for_dev_space():
+def test_agent_hook_timeout_is_extended_for_crm_dev_space():
     settings = get_settings()
     decision = PolicyDecision(
-        policy_key="dev_group",
+        policy_key="crm_dev_group",
         intent=Intent.UNKNOWN,
         decision="allow",
         handler="openclaw_agent_hook",
         reason="Dev owner allowed",
-        scope="dev_owner_only",
+        scope="crm_dev_owner_only",
+    )
+
+    assert _timeout_seconds_for_space(settings=settings, decision=decision) >= 900
+
+
+def test_agent_hook_timeout_is_extended_for_mission_control_dev_space():
+    settings = get_settings()
+    decision = PolicyDecision(
+        policy_key="mission_control_dev_group",
+        intent=Intent.UNKNOWN,
+        decision="allow",
+        handler="openclaw_agent_hook",
+        reason="Dev owner allowed",
+        scope="mission_control_dev_owner_only",
     )
 
     assert _timeout_seconds_for_space(settings=settings, decision=decision) >= 900

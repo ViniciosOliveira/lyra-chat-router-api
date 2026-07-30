@@ -9,6 +9,8 @@ MKT_PERFORMANCE_SPACE = "spaces/AAQAiP4nKa4"
 MKT_PERFORMANCE_POLICY_KEY = "mkt_performance_analysis_only"
 CONTENT_CREATIVES_SPACE = "spaces/AAQATyNL6WE"
 CONTENT_CREATIVES_POLICY_KEY = "content_creatives_edune"
+CRM_DEV_SPACE = "spaces/AAQAKE4s-Ko"
+MISSION_CONTROL_DEV_SPACE = "spaces/AAQAiUi_5No"
 
 
 @dataclass(frozen=True)
@@ -71,11 +73,17 @@ SPACE_POLICIES: dict[str, SpacePolicy] = {
         allowed_users=TURNSTILE_ALLOWED_USERS,
         scope="turnstile_only",
     ),
-    "spaces/AAQAKE4s-Ko": SpacePolicy(
-        key="dev_group",
-        label="Dev / Mission Control",
+    CRM_DEV_SPACE: SpacePolicy(
+        key="crm_dev_group",
+        label="Dev - CRM",
         allowed_users=frozenset({OWNER_USER}),
-        scope="dev_owner_only",
+        scope="crm_dev_owner_only",
+    ),
+    MISSION_CONTROL_DEV_SPACE: SpacePolicy(
+        key="mission_control_dev_group",
+        label="Dev - Mission Control",
+        allowed_users=frozenset({OWNER_USER}),
+        scope="mission_control_dev_owner_only",
     ),
     "spaces/AAQAqhVlskk": SpacePolicy(
         key="certificates_correios",

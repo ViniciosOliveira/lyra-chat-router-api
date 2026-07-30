@@ -91,6 +91,26 @@ def test_allows_owner_dm_space():
     assert decision.scope == "general_owner_only"
 
 
+def test_allows_owner_in_crm_dev_space_with_crm_scope():
+    decision = PolicyEngine().decide(
+        event_with_text("pode seguir", space="spaces/AAQAKE4s-Ko")
+    )
+
+    assert decision.decision == "allow"
+    assert decision.policy_key == "crm_dev_group"
+    assert decision.scope == "crm_dev_owner_only"
+
+
+def test_allows_owner_in_mission_control_dev_space_with_mc_scope():
+    decision = PolicyEngine().decide(
+        event_with_text("pode seguir", space="spaces/AAQAiUi_5No")
+    )
+
+    assert decision.decision == "allow"
+    assert decision.policy_key == "mission_control_dev_group"
+    assert decision.scope == "mission_control_dev_owner_only"
+
+
 def test_blocks_unknown_space():
     decision = PolicyEngine().decide(event_with_text("me ajuda", space="spaces/UNKNOWN"))
 
