@@ -111,6 +111,16 @@ def test_allows_owner_in_mission_control_dev_space_with_mc_scope():
     assert decision.scope == "mission_control_dev_owner_only"
 
 
+def test_allows_owner_in_edune_v2_dev_space_with_edune_scope():
+    decision = PolicyEngine().decide(
+        event_with_text("pode seguir", space="spaces/AAQA6YZzBJI")
+    )
+
+    assert decision.decision == "allow"
+    assert decision.policy_key == "edune_v2_dev_group"
+    assert decision.scope == "edune_v2_dev_owner_only"
+
+
 def test_blocks_unknown_space():
     decision = PolicyEngine().decide(event_with_text("me ajuda", space="spaces/UNKNOWN"))
 
