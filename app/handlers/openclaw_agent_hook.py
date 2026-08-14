@@ -37,6 +37,13 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
 - If Vinícios explicitly authorizes execution (for example: "pode seguir"), you may inspect code, edit files, run tests/builds, commit, deploy, and validate according to the project documentation.
 - Do not apply the Marketing Performance analysis-only restriction in this space."""
 
+    if decision.scope == "shared_dev_owner_only":
+        return """- Dev - Shared is an operational development space exclusively for the autonomous Shared application platform.
+- Load memory/projects/shared/README.md, decisions and lessons before technical work.
+- Shared owns its management UI, deploy engine, application registry, versions, logs, databases and isolated runtimes; Mission Control may integrate only through a formal API/SSO contract.
+- Do not implement Shared runtime behavior inside Mission Control, CRM, FESN or another product.
+- Only Vinícios may authorize actions in this space. Follow the documentation gate, exact-scope approval, backup, tests, deploy and real-runtime validation rules."""
+
     if decision.scope == "turnstile_only":
         return """- This space is restricted to Control iD turnstile operations only.
 - Load the turnstile skill/documentation before acting.
@@ -62,7 +69,11 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
 
 
 def _timeout_seconds_for_space(*, settings: Settings, decision: PolicyDecision) -> int:
-    if decision.scope in {"crm_dev_owner_only", "mission_control_dev_owner_only"}:
+    if decision.scope in {
+        "crm_dev_owner_only",
+        "mission_control_dev_owner_only",
+        "shared_dev_owner_only",
+    }:
         return max(settings.openclaw_agent_hook_timeout_seconds, 900)
     return settings.openclaw_agent_hook_timeout_seconds
 

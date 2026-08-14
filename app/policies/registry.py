@@ -15,6 +15,7 @@ CRM_DEV_SPACE = "spaces/AAQAKE4s-Ko"
 MISSION_CONTROL_DEV_SPACE = "spaces/AAQAiUi_5No"
 EDUNE_V2_DEV_SPACE = "spaces/AAQA6YZzBJI"
 FESN_DEV_SPACE = "spaces/AAQApxfoZm8"
+SHARED_DEV_SPACE = "spaces/AAQA8PyOLEI"
 
 
 @dataclass(frozen=True)
@@ -100,6 +101,12 @@ SPACE_POLICIES: dict[str, SpacePolicy] = {
         label="Dev - Fesn",
         allowed_users=frozenset({OWNER_USER}),
         scope="fesn_dev_owner_only",
+    ),
+    SHARED_DEV_SPACE: SpacePolicy(
+        key="shared_dev_group",
+        label="Dev - Shared",
+        allowed_users=frozenset({OWNER_USER}),
+        scope="shared_dev_owner_only",
     ),
     "spaces/AAQAqhVlskk": SpacePolicy(
         key="education_operations",

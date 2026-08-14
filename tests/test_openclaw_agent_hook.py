@@ -54,6 +54,35 @@ def test_unknown_space_escalation_message_includes_context():
     assert "Mensagem original:\nfaz um relatório de certificados" in message
 
 
+def test_shared_dev_space_uses_independent_product_rules():
+    event = NormalizedChatEvent(
+        event_type="MESSAGE",
+        space_name="spaces/AAQA8PyOLEI",
+        space_display_name="Dev - Shared",
+        user_name="users/108616006099141003473",
+        user_display_name="Vinícios Oliveira",
+        user_email="vinicios@grupooliveirarocha.com",
+        thread_name="spaces/AAQA8PyOLEI/threads/test",
+        message_name="spaces/AAQA8PyOLEI/messages/test",
+        text="pode seguir",
+        raw={},
+    )
+    decision = PolicyDecision(
+        policy_key="shared_dev_group",
+        intent=Intent.UNKNOWN,
+        decision="allow",
+        handler="openclaw_agent_hook",
+        reason="Dev owner allowed",
+        scope="shared_dev_owner_only",
+    )
+
+    rules = _rules_for_space(event, decision)
+
+    assert "autonomous Shared application platform" in rules
+    assert "memory/projects/shared/README.md" in rules
+    assert "Do not implement Shared runtime behavior inside Mission Control" in rules
+
+
 def test_education_operations_requires_root_delivery():
     decision = PolicyDecision(
         policy_key="education_operations",
