@@ -6,9 +6,10 @@ SCOPED_DENY_TEXT = {
         "Essa solicitação está fora do escopo permitido para este grupo. "
         "Posso ajudar apenas com operação de catraca aqui."
     ),
-    "certificates_correios_only": (
+    "education_operations_analytics": (
         "Essa solicitação está fora do escopo permitido para este grupo. "
-        "Posso ajudar apenas com certificados ou etiquetas dos Correios aqui."
+        "Posso ajudar apenas com certificados ou etiquetas dos Correios e com relatórios agregados "
+        "sobre vendas de cursos do IS e vendas de certificados na plataforma."
     ),
     "marketing_performance_analysis_only": (
         "Essa solicitação está fora do escopo permitido para este grupo. "

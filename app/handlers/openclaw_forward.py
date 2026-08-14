@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 from typing import Any
 
 import requests
@@ -13,6 +14,22 @@ logger = logging.getLogger(__name__)
 
 class OpenClawForwardError(RuntimeError):
     pass
+
+
+def _strip_thread_delivery_context(payload: dict[str, Any]) -> None:
+    payload.pop("thread", None)
+    candidates = [payload.get("message")]
+    chat_payload = payload.get("chat")
+    if isinstance(chat_payload, dict):
+        message_payload = chat_payload.get("messagePayload")
+        if isinstance(message_payload, dict):
+            candidates.append(message_payload.get("message"))
+        command_payload = chat_payload.get("appCommandPayload")
+        if isinstance(command_payload, dict):
+            candidates.append(command_payload.get("message"))
+    for message in candidates:
+        if isinstance(message, dict):
+            message.pop("thread", None)
 
 
 def _has_visible_google_chat_response(data: dict[str, Any]) -> bool:
@@ -42,12 +59,15 @@ def _build_forward_payload(payload: dict[str, Any], event: NormalizedChatEvent, 
     The `_lyraRouter` extension is additive and namespaced so it won't affect Google
     Chat response parsing, but keeps the policy decision available for audit/debug.
     """
-    forwarded = dict(payload)
+    root_only = decision.scope == "education_operations_analytics"
+    forwarded = deepcopy(payload)
+    if root_only:
+        _strip_thread_delivery_context(forwarded)
     forwarded["_lyraRouter"] = {
         "source": "googlechat",
         "space": event.space_name,
         "user": event.user_name,
-        "thread": event.thread_name,
+        "thread": None if root_only else event.thread_name,
         "policy": decision.policy_key,
         "allowed_scope": decision.scope,
         "message": event.text,
@@ -61,6 +81,8 @@ def _build_forward_payload(payload: dict[str, Any], event: NormalizedChatEvent, 
         "decision": decision.decision,
         "intent": decision.intent.value,
         "reason": decision.reason,
+        "continuation": decision.continuation,
+        "reply_mode": "root_only" if root_only else "channel_default",
     }
     return forwarded
 

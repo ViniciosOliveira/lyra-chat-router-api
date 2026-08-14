@@ -3,11 +3,14 @@ from pathlib import Path
 
 from app.googlechat.normalizer import normalize_event
 from app.policies.engine import PolicyEngine
+from app.policies.intents import Intent
 
 OWNER = "users/108616006099141003473"
 JOAO_VICTOR = "users/100811886516332607168"
 RAFAEL_CAMARGO = "users/101466515008395418981"
 RAQUEL_DUARTE = "users/102763968224911184184"
+BIANCA_ROCHA = "users/108384585713055881619"
+LUCAS_ZAVODINI = "users/102398808226223128531"
 
 
 def event_with_text(text: str, space: str = "spaces/AAQAiP4nKa4", user: str = OWNER):
@@ -38,6 +41,16 @@ def test_allows_joao_victor_marketing_analysis():
 
 def test_allows_rafael_camargo_marketing_analysis():
     decision = PolicyEngine().decide(event_with_text("Analisa o CPL do Google Ads", user=RAFAEL_CAMARGO))
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.scope == "marketing_performance_analysis_only"
+
+
+def test_allows_lucas_zavodini_marketing_analysis():
+    decision = PolicyEngine().decide(
+        event_with_text("Gere um relatório de conversão por canal", user=LUCAS_ZAVODINI)
+    )
 
     assert decision.decision == "allow"
     assert decision.handler == "analytics_handler"
@@ -167,7 +180,7 @@ def test_allows_certificate_scope():
 
     assert decision.decision == "allow"
     assert decision.handler == "scoped_operation_handler"
-    assert decision.scope == "certificates_correios_only"
+    assert decision.scope == "education_operations_analytics"
 
 
 def test_allows_correios_scope():
@@ -175,7 +188,77 @@ def test_allows_correios_scope():
 
     assert decision.decision == "allow"
     assert decision.handler == "scoped_operation_handler"
-    assert decision.scope == "certificates_correios_only"
+    assert decision.scope == "education_operations_analytics"
+
+
+def test_allows_affirmative_continuation_of_correios_request():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "@Lyra Sim",
+            space="spaces/AAQAqhVlskk",
+            user="users/102836791593473492239",
+        ),
+        continuation_intent=Intent.CORREIOS_LABEL,
+    )
+
+    assert decision.decision == "allow"
+    assert decision.handler == "scoped_operation_handler"
+    assert decision.intent == Intent.CORREIOS_LABEL
+    assert decision.continuation is True
+
+
+def test_continuation_does_not_bypass_user_allowlist():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "@Lyra Sim",
+            space="spaces/AAQAqhVlskk",
+            user="users/unauthorized",
+        ),
+        continuation_intent=Intent.CORREIOS_LABEL,
+    )
+
+    assert decision.decision == "deny"
+    assert decision.reason == "User is not allowed for this Google Chat space"
+
+
+def test_allows_bianca_course_sales_report_in_education_operations():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "Gere um gráfico das vendas de cursos do IS por mês",
+            space="spaces/AAQAqhVlskk",
+            user=BIANCA_ROCHA,
+        )
+    )
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.scope == "education_operations_analytics"
+
+
+def test_allows_bianca_certificate_sales_report_in_education_operations():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "Preciso de relatório de vendas de certificados na plataforma",
+            space="spaces/AAQAqhVlskk",
+            user=BIANCA_ROCHA,
+        )
+    )
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+
+
+def test_blocks_campaign_change_in_education_operations():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "Aumenta o orçamento da campanha",
+            space="spaces/AAQAqhVlskk",
+            user=BIANCA_ROCHA,
+        )
+    )
+
+    assert decision.decision == "deny"
+    assert decision.scope == "education_operations_analytics"
 
 
 def test_allows_content_creatives_group():

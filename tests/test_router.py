@@ -3,7 +3,9 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
+from app.googlechat import router as googlechat_router
 from app.main import app
+from app.policies.intents import Intent
 
 
 def test_googlechat_post_allows_analysis_in_dev_mode():
@@ -69,3 +71,23 @@ def test_googlechat_post_scoped_group_denies_out_of_scope_in_dev_mode():
     assert response.status_code == 200
     assert "fora do escopo permitido" in response.json()["text"]
     assert "certificados ou etiquetas dos Correios" in response.json()["text"]
+
+
+def test_googlechat_post_continues_pending_correios_request(monkeypatch):
+    monkeypatch.setattr(
+        googlechat_router.ConfirmationContinuationResolver,
+        "resolve",
+        lambda self, event: Intent.CORREIOS_LABEL,
+    )
+    client = TestClient(app)
+    payload = json.loads(Path("tests/fixtures/googlechat_message.json").read_text())
+    payload["space"]["name"] = "spaces/AAQAqhVlskk"
+    payload["message"]["name"] = "spaces/AAQAqhVlskk/messages/confirmation"
+    payload["message"]["thread"]["name"] = "spaces/AAQAqhVlskk/threads/labels"
+    payload["user"]["name"] = "users/102836791593473492239"
+    payload["message"]["text"] = "@Lyra Sim"
+
+    response = client.post("/googlechat/", json=payload)
+
+    assert response.status_code == 200
+    assert "Pedido reconhecido dentro do escopo de certificados/Correios" in response.json()["text"]

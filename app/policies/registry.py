@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 
 OWNER_USER = "users/108616006099141003473"
+BIANCA_ROCHA_USER = "users/108384585713055881619"
+LUCAS_ZAVODINI_USER = "users/102398808226223128531"
 JOAO_VICTOR_USER = "users/100811886516332607168"
 RAFAEL_CAMARGO_USER = "users/101466515008395418981"
 RAQUEL_DUARTE_USER = "users/102763968224911184184"
@@ -37,7 +39,7 @@ TURNSTILE_ALLOWED_USERS = frozenset(
 CERTIFICATE_ALLOWED_USERS = frozenset(
     {
         OWNER_USER,
-        "users/108384585713055881619",
+        BIANCA_ROCHA_USER,
         "users/102836791593473492239",
     }
 )
@@ -100,16 +102,18 @@ SPACE_POLICIES: dict[str, SpacePolicy] = {
         scope="fesn_dev_owner_only",
     ),
     "spaces/AAQAqhVlskk": SpacePolicy(
-        key="certificates_correios",
-        label="Certificados e Correios",
+        key="education_operations",
+        label="Comitê - Operações Educacionais",
         allowed_users=CERTIFICATE_ALLOWED_USERS,
-        scope="certificates_correios_only",
+        scope="education_operations_analytics",
     ),
     # Business policies managed directly by the router.
     MKT_PERFORMANCE_SPACE: SpacePolicy(
         key=MKT_PERFORMANCE_POLICY_KEY,
         label="Comitê de Mkt Performance",
-        allowed_users=frozenset({OWNER_USER, JOAO_VICTOR_USER, RAFAEL_CAMARGO_USER}),
+        allowed_users=frozenset(
+            {OWNER_USER, JOAO_VICTOR_USER, RAFAEL_CAMARGO_USER, LUCAS_ZAVODINI_USER}
+        ),
         scope="marketing_performance_analysis_only",
     ),
     CONTENT_CREATIVES_SPACE: SpacePolicy(

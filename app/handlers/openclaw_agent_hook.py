@@ -42,10 +42,14 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
 - Load the turnstile skill/documentation before acting.
 - Refuse anything unrelated to turnstile control."""
 
-    if decision.scope == "certificates_correios_only":
-        return """- This space is restricted to certificate signing and Correios label generation.
-- Load the matching operational skill before acting.
-- Refuse anything outside certificates or Correios labels."""
+    if decision.scope == "education_operations_analytics":
+        return """- This is the Comitê - Operações Educacionais space.
+- Authorized users may request certificate signing and Correios label generation; load the matching operational skill before acting.
+- Authorized users may also request read-only reports, analyses and charts about IS course sales and certificate sales on the platform.
+- Use documented/local data sources and default to aggregate results without customer personal data.
+- Do not modify source data, campaigns, permissions, code, deployments or business rules from this group.
+- Reply at the space root. Never pass replyTo or threadId when delivering a response to this space.
+- Refuse requests outside this education-operations scope and ask a short clarifying question when the request is ambiguous."""
 
     if decision.scope == "general_owner_only":
         return """- This is an owner-only space for Vinícios.
@@ -63,15 +67,24 @@ def _timeout_seconds_for_space(*, settings: Settings, decision: PolicyDecision) 
     return settings.openclaw_agent_hook_timeout_seconds
 
 
+def _should_deliver_in_thread(decision: PolicyDecision) -> bool:
+    return decision.scope != "education_operations_analytics"
+
+
 def _build_agent_message(event: NormalizedChatEvent, decision: PolicyDecision) -> str:
     rules = _rules_for_space(event, decision)
+    thread_context = (
+        "suppressed for root-only delivery"
+        if decision.scope == "education_operations_analytics"
+        else event.thread_name or "unknown"
+    )
 
     return f"""Google Chat message received via Lyra Chat Router Pub/Sub subscription.
 
 Context:
 - Space: {event.space_name}
 - User: {event.user_name} ({event.user_display_name or 'unknown'})
-- Thread: {event.thread_name or 'unknown'}
+- Thread: {thread_context}
 - Policy: {decision.policy_key}
 - Scope: {decision.scope}
 - Intent: {decision.intent.value}
@@ -153,7 +166,7 @@ def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision
         "to": event.space_name,
         "timeoutSeconds": _timeout_seconds_for_space(settings=settings, decision=decision),
     }
-    if event.thread_name:
+    if event.thread_name and _should_deliver_in_thread(decision):
         payload["threadId"] = event.thread_name
     return _post_agent_hook_payload(settings=settings, payload=payload)
 
@@ -171,7 +184,7 @@ def _post_forward_fallback_hook(
         "to": event.space_name,
         "timeoutSeconds": _timeout_seconds_for_space(settings=settings, decision=decision),
     }
-    if event.thread_name:
+    if event.thread_name and _should_deliver_in_thread(decision):
         payload["threadId"] = event.thread_name
     return _post_agent_hook_payload(settings=settings, payload=payload)
 

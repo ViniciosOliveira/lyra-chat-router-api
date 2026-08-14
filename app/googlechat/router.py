@@ -16,6 +16,7 @@ from app.handlers.openclaw_agent_hook import (
 )
 from app.handlers.openclaw_forward import OpenClawForwardError, forward_to_openclaw
 from app.handlers.scoped_operation import build_scoped_operation_response
+from app.policies.continuations import ConfirmationContinuationResolver
 from app.policies.engine import PolicyEngine
 
 router = APIRouter(prefix="/googlechat", tags=["googlechat"])
@@ -61,7 +62,8 @@ async def receive_google_chat_event(
     if delivery_state.already_completed:
         return {}
 
-    decision = PolicyEngine().decide(event)
+    continuation_intent = ConfirmationContinuationResolver().resolve(event)
+    decision = PolicyEngine().decide(event, continuation_intent=continuation_intent)
 
     if decision.handler == "deny_handler":
         response = build_deny_response(decision)

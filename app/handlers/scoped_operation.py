@@ -11,7 +11,7 @@ def build_scoped_operation_response(event: NormalizedChatEvent, decision: Policy
                 "até conectarmos o handler operacional oficial."
             )
         }
-    if decision.scope == "certificates_correios_only":
+    if decision.scope == "education_operations_analytics":
         return {
             "text": (
                 "Pedido reconhecido dentro do escopo de certificados/Correios. "

@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 
 from app.googlechat.schemas import NormalizedChatEvent
+from app.policies.continuations import CONTINUATION_REASON
 from app.policies.intents import Intent, classify_intent
 from app.policies.registry import CONTENT_CREATIVES_POLICY_KEY, MKT_PERFORMANCE_POLICY_KEY, SpacePolicy, get_space_policy
 
@@ -26,6 +27,12 @@ BLOCKED_MKT_INTENTS = {
 
 TURNSTILE_INTENTS = {Intent.TURNSTILE_CONTROL}
 CERTIFICATE_CORREIOS_INTENTS = {Intent.CERTIFICATE_SIGNING, Intent.CORREIOS_LABEL}
+EDUCATION_OPERATIONS_INTENTS = {
+    Intent.CERTIFICATE_SIGNING,
+    Intent.CORREIOS_LABEL,
+    Intent.PERFORMANCE_REPORT,
+    Intent.METRIC_EXPLANATION,
+}
 
 
 @dataclass(frozen=True)
@@ -36,10 +43,15 @@ class PolicyDecision:
     handler: str
     reason: str
     scope: str = "unknown"
+    continuation: bool = False
 
 
 class PolicyEngine:
-    def decide(self, event: NormalizedChatEvent) -> PolicyDecision:
+    def decide(
+        self,
+        event: NormalizedChatEvent,
+        continuation_intent: Intent | None = None,
+    ) -> PolicyDecision:
         intent = classify_intent(event.text)
         policy = get_space_policy(event.space_name)
 
@@ -76,12 +88,37 @@ class PolicyEngine:
                 deny_reason="Only turnstile control requests are allowed in this space",
             )
 
-        if policy.scope == "certificates_correios_only":
-            return self._decide_scoped_operation(
+        if policy.scope == "education_operations_analytics":
+            if continuation_intent in CERTIFICATE_CORREIOS_INTENTS:
+                return PolicyDecision(
+                    policy_key=policy.key,
+                    intent=continuation_intent,
+                    decision="allow",
+                    handler="scoped_operation_handler",
+                    reason=CONTINUATION_REASON,
+                    scope=policy.scope,
+                    continuation=True,
+                )
+            if intent in EDUCATION_OPERATIONS_INTENTS:
+                return PolicyDecision(
+                    policy_key=policy.key,
+                    intent=intent,
+                    decision="allow",
+                    handler=(
+                        "scoped_operation_handler"
+                        if intent in CERTIFICATE_CORREIOS_INTENTS
+                        else "analytics_handler"
+                    ),
+                    reason="Education operations and read-only course/certificate analytics are allowed",
+                    scope=policy.scope,
+                )
+            return PolicyDecision(
+                policy_key=policy.key,
                 intent=intent,
-                policy=policy,
-                allowed_intents=CERTIFICATE_CORREIOS_INTENTS,
-                deny_reason="Only certificate signing and Correios label requests are allowed in this space",
+                decision="deny",
+                handler="deny_handler",
+                reason="Intent is outside education operations and course/certificate analytics scope",
+                scope=policy.scope,
             )
 
         # Owner-only DM/dev/test spaces are allowed through the router. Execution remains
