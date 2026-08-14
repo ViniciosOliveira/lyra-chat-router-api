@@ -12,6 +12,7 @@ CONTENT_CREATIVES_POLICY_KEY = "content_creatives_edune"
 CRM_DEV_SPACE = "spaces/AAQAKE4s-Ko"
 MISSION_CONTROL_DEV_SPACE = "spaces/AAQAiUi_5No"
 EDUNE_V2_DEV_SPACE = "spaces/AAQA6YZzBJI"
+FESN_DEV_SPACE = "spaces/AAQApxfoZm8"
 
 
 @dataclass(frozen=True)
@@ -91,6 +92,12 @@ SPACE_POLICIES: dict[str, SpacePolicy] = {
         label="Dev - Edune 2.0",
         allowed_users=frozenset({OWNER_USER}),
         scope="edune_v2_dev_owner_only",
+    ),
+    FESN_DEV_SPACE: SpacePolicy(
+        key="fesn_dev_group",
+        label="Dev - Fesn",
+        allowed_users=frozenset({OWNER_USER}),
+        scope="fesn_dev_owner_only",
     ),
     "spaces/AAQAqhVlskk": SpacePolicy(
         key="certificates_correios",

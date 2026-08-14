@@ -121,6 +121,16 @@ def test_allows_owner_in_edune_v2_dev_space_with_edune_scope():
     assert decision.scope == "edune_v2_dev_owner_only"
 
 
+def test_allows_owner_in_fesn_dev_space_with_fesn_scope():
+    decision = PolicyEngine().decide(
+        event_with_text("pode seguir", space="spaces/AAQApxfoZm8")
+    )
+
+    assert decision.decision == "allow"
+    assert decision.policy_key == "fesn_dev_group"
+    assert decision.scope == "fesn_dev_owner_only"
+
+
 def test_blocks_unknown_space():
     decision = PolicyEngine().decide(event_with_text("me ajuda", space="spaces/UNKNOWN"))
 
