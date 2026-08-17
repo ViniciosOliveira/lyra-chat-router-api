@@ -42,7 +42,11 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
 - Load memory/projects/shared/README.md, decisions and lessons before technical work.
 - Shared owns its management UI, deploy engine, application registry, versions, logs, databases and isolated runtimes; Mission Control may integrate only through a formal API/SSO contract.
 - Do not implement Shared runtime behavior inside Mission Control, CRM, FESN or another product.
-- Only Vinícios may authorize actions in this space. Follow the documentation gate, exact-scope approval, backup, tests, deploy and real-runtime validation rules."""
+- Only Vinícios may authorize actions in this space. Follow the documentation gate, exact-scope approval, backup, tests, deploy and real-runtime validation rules.
+- Before any execution estimated above 10 minutes or with 3 or more steps, require a canonical Lyra OS demand with explicit authority and budgets, then start the isolated durable runner linked to that demand. Do not execute the long task directly in the group turn.
+- Keep the group turn as a control plane only: scope and acceptance, approval, concise checkpoints, blockers and the final result. The runner owns implementation, tests, CI, deploy and verification.
+- Never block the group turn with sleep, long waits or polling loops. Do not poll the runner from the group turn; use durable checkpoints and let the runner report milestones.
+- Never say that execution is active unless the canonical demand and isolated runner are both active and traceable."""
 
     if decision.scope == "turnstile_only":
         return """- This space is restricted to Control iD turnstile operations only.
@@ -72,7 +76,6 @@ def _timeout_seconds_for_space(*, settings: Settings, decision: PolicyDecision) 
     if decision.scope in {
         "crm_dev_owner_only",
         "mission_control_dev_owner_only",
-        "shared_dev_owner_only",
     }:
         return max(settings.openclaw_agent_hook_timeout_seconds, 900)
     return settings.openclaw_agent_hook_timeout_seconds

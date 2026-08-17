@@ -1,8 +1,11 @@
+from app.core.config import get_settings
 from app.googlechat.schemas import NormalizedChatEvent
 from app.handlers.openclaw_agent_hook import (
+    _build_agent_message,
     _build_owner_escalation_message,
     _rules_for_space,
     _should_deliver_in_thread,
+    _timeout_seconds_for_space,
     should_escalate_to_owner,
 )
 from app.handlers.openclaw_forward import _build_forward_payload
@@ -81,6 +84,31 @@ def test_shared_dev_space_uses_independent_product_rules():
     assert "autonomous Shared application platform" in rules
     assert "memory/projects/shared/README.md" in rules
     assert "Do not implement Shared runtime behavior inside Mission Control" in rules
+    assert "above 10 minutes or with 3 or more steps" in rules
+    assert "canonical Lyra OS demand" in rules
+    assert "isolated durable runner linked to that demand" in rules
+    assert "control plane only" in rules
+    assert "Never block the group turn with sleep, long waits or polling loops" in rules
+
+    message = _build_agent_message(event, decision)
+    assert "The runner owns implementation, tests, CI, deploy and verification" in message
+    assert "both active and traceable" in message
+
+
+def test_shared_dev_space_keeps_group_turn_timeout_short():
+    settings = get_settings()
+    decision = PolicyDecision(
+        policy_key="shared_dev_group",
+        intent=Intent.UNKNOWN,
+        decision="allow",
+        handler="openclaw_agent_hook",
+        reason="Dev owner allowed",
+        scope="shared_dev_owner_only",
+    )
+
+    assert _timeout_seconds_for_space(settings=settings, decision=decision) == (
+        settings.openclaw_agent_hook_timeout_seconds
+    )
 
 
 def test_education_operations_requires_root_delivery():
