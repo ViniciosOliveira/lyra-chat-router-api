@@ -16,6 +16,7 @@ MISSION_CONTROL_DEV_SPACE = "spaces/AAQAiUi_5No"
 EDUNE_V2_DEV_SPACE = "spaces/AAQA6YZzBJI"
 FESN_DEV_SPACE = "spaces/AAQApxfoZm8"
 SHARED_DEV_SPACE = "spaces/AAQA8PyOLEI"
+LYRA_OS_PRODUCT_OPERATIONS_SPACE = "spaces/AAQAhfNho-0"
 
 
 @dataclass(frozen=True)
@@ -107,6 +108,12 @@ SPACE_POLICIES: dict[str, SpacePolicy] = {
         label="Dev - Shared",
         allowed_users=frozenset({OWNER_USER}),
         scope="shared_dev_owner_only",
+    ),
+    LYRA_OS_PRODUCT_OPERATIONS_SPACE: SpacePolicy(
+        key="lyra_os_product_operations",
+        label="LyraOS — Produto & Operação",
+        allowed_users=frozenset({OWNER_USER}),
+        scope="lyra_os_product_operations_owner_only",
     ),
     "spaces/AAQAqhVlskk": SpacePolicy(
         key="education_operations",

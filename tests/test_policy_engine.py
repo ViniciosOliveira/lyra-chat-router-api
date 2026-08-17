@@ -154,6 +154,16 @@ def test_allows_owner_in_shared_dev_space_with_shared_scope():
     assert decision.scope == "shared_dev_owner_only"
 
 
+def test_allows_owner_in_lyra_os_product_operations_space_with_owner_scope():
+    decision = PolicyEngine().decide(
+        event_with_text("qual o estado canônico?", space="spaces/AAQAhfNho-0")
+    )
+
+    assert decision.decision == "allow"
+    assert decision.policy_key == "lyra_os_product_operations"
+    assert decision.scope == "lyra_os_product_operations_owner_only"
+
+
 def test_blocks_unknown_space():
     decision = PolicyEngine().decide(event_with_text("me ajuda", space="spaces/UNKNOWN"))
 
