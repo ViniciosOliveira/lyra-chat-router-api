@@ -84,15 +84,51 @@ def test_shared_dev_space_uses_independent_product_rules():
     assert "autonomous Shared application platform" in rules
     assert "memory/projects/shared/README.md" in rules
     assert "Do not implement Shared runtime behavior inside Mission Control" in rules
-    assert "above 10 minutes or with 3 or more steps" in rules
-    assert "canonical Lyra OS demand" in rules
-    assert "isolated durable runner linked to that demand" in rules
+    assert "durable external checkpoints for long execution" in rules
+    assert "Do not create, approve, dispatch or verify a Lyra OS demand" in rules
+    assert "independent external journal" in rules
     assert "control plane only" in rules
     assert "Never block the group turn with sleep, long waits or polling loops" in rules
 
     message = _build_agent_message(event, decision)
-    assert "The runner owns implementation, tests, CI, deploy and verification" in message
-    assert "both active and traceable" in message
+    assert "external execution owns implementation, tests, CI and verification" in message
+    assert "external journal and execution are both active and traceable" in message
+
+
+def test_all_dev_scopes_use_external_fast_lane_without_lyra_os_dependency():
+    event = NormalizedChatEvent(
+        event_type="MESSAGE",
+        space_name="spaces/mqWtpSAAAAE",
+        space_display_name="Comitê - Desenvolvimento",
+        user_name="users/108616006099141003473",
+        user_display_name="Vinícios Oliveira",
+        user_email="vinicios@grupooliveirarocha.com",
+        thread_name=None,
+        message_name="spaces/mqWtpSAAAAE/messages/test",
+        text="implemente",
+        raw={},
+    )
+    for scope in (
+        "crm_dev_owner_only",
+        "mission_control_dev_owner_only",
+        "edune_v2_dev_owner_only",
+        "fesn_dev_owner_only",
+        "shared_dev_owner_only",
+        "lyra_os_product_operations_owner_only",
+        "general_owner_only",
+    ):
+        decision = PolicyDecision(
+            policy_key="dev",
+            intent=Intent.UNKNOWN,
+            decision="allow",
+            handler="openclaw_agent_hook",
+            reason="owner allowed",
+            scope=scope,
+        )
+        rules = _rules_for_space(event, decision)
+        assert "external Google Chat fast lane" in rules
+        assert "Do not create, approve, dispatch or verify a Lyra OS demand" in rules
+        assert "Product deploys" in rules
 
 
 def test_shared_dev_space_keeps_group_turn_timeout_short():
