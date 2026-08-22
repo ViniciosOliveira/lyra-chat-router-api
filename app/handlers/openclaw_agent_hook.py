@@ -12,6 +12,12 @@ from app.policies.intents import Intent
 
 logger = logging.getLogger(__name__)
 
+EXTERNAL_FAST_LANE_RULES = """- This owner request is covered by the external Google Chat fast lane for T1 and internal reversible T2 work.
+- Do not create, approve, dispatch or verify a Lyra OS demand for eligible work. Record it with a `fastlane-` id in the independent external journal before mutation.
+- The standing authority removes repeated individual approval for exact-scope reads, diagnosis, documentation, internal source/config edits, tests/builds, local commits and approved internal branches or pull requests.
+- Product deploys, credentials/security, DNS, manual database mutation, deletion, destructive migration, external sensitive contact and irreversible action still require specific sponsor authority.
+- Keep the group as the visible control plane and use durable external checkpoints for long execution."""
+
 
 class OpenClawAgentHookError(RuntimeError):
     pass
@@ -28,25 +34,45 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
         return """- Dev - CRM is an operational development space exclusively for the autonomous CRM product.
 - Load memory/projects/crm/README.md, memory/projects/crm-api/README.md, decisions and lessons before technical work.
 - Do not treat Mission Control source, routes, API or deploy as the CRM source of truth.
-- If Vinícios explicitly authorizes execution (for example: "pode seguir"), you may inspect CRM code, edit files, run tests/builds, commit, deploy, and validate according to the CRM documentation."""
+- You may inspect CRM code, edit exact declared files, run tests/builds, commit and validate according to the CRM documentation.
+""" + EXTERNAL_FAST_LANE_RULES
 
     if decision.scope == "mission_control_dev_owner_only":
         return """- Dev - Mission Control is an operational development space exclusively for Mission Control.
 - Load memory/projects/mission-control/README.md, memory/projects/mission-control-api/README.md, decisions and lessons before technical work.
 - Do not implement operational CRM behavior inside Mission Control; integrations must use formal contracts.
-- If Vinícios explicitly authorizes execution (for example: "pode seguir"), you may inspect code, edit files, run tests/builds, commit, deploy, and validate according to the project documentation.
-- Do not apply the Marketing Performance analysis-only restriction in this space."""
+- You may inspect code, edit exact declared files, run tests/builds, commit and validate according to the project documentation.
+- Do not apply the Marketing Performance analysis-only restriction in this space.
+""" + EXTERNAL_FAST_LANE_RULES
+
+    if decision.scope == "edune_v2_dev_owner_only":
+        return """- Dev - Edune 2.0 is an operational development space exclusively for Edune 2.0.
+- Load the Edune 2.0 project documentation, decisions and lessons before technical work.
+- Preserve the existing PHP, MariaDB and proprietary framework architecture unless Vinícios explicitly changes that decision.
+""" + EXTERNAL_FAST_LANE_RULES
+
+    if decision.scope == "fesn_dev_owner_only":
+        return """- Dev - FESN is an operational development space exclusively for the autonomous FESN product.
+- Load the FESN project documentation, decisions and lessons before technical work.
+- Keep FESN decoupled from Mission Control and integrate only through formal contracts.
+""" + EXTERNAL_FAST_LANE_RULES
 
     if decision.scope == "shared_dev_owner_only":
         return """- Dev - Shared is an operational development space exclusively for the autonomous Shared application platform.
 - Load memory/projects/shared/README.md, decisions and lessons before technical work.
 - Shared owns its management UI, deploy engine, application registry, versions, logs, databases and isolated runtimes; Mission Control may integrate only through a formal API/SSO contract.
 - Do not implement Shared runtime behavior inside Mission Control, CRM, FESN or another product.
-- Only Vinícios may authorize actions in this space. Follow the documentation gate, exact-scope approval, backup, tests, deploy and real-runtime validation rules.
-- Before any execution estimated above 10 minutes or with 3 or more steps, require a canonical Lyra OS demand with explicit authority and budgets, then start the isolated durable runner linked to that demand. Do not execute the long task directly in the group turn.
-- Keep the group turn as a control plane only: scope and acceptance, approval, concise checkpoints, blockers and the final result. The runner owns implementation, tests, CI, deploy and verification.
+- Only Vinícios may authorize actions in this space. Follow the documentation gate, exact-scope declaration, backup, tests and real-runtime validation rules.
+- Keep the group turn as a control plane only: scope and acceptance, concise checkpoints, blockers and the final result. The external execution owns implementation, tests, CI and verification.
 - Never block the group turn with sleep, long waits or polling loops. Do not poll the runner from the group turn; use durable checkpoints and let the runner report milestones.
-- Never say that execution is active unless the canonical demand and isolated runner are both active and traceable."""
+- Never say that execution is active unless the external journal and execution are both active and traceable.
+""" + EXTERNAL_FAST_LANE_RULES
+
+    if decision.scope == "lyra_os_product_operations_owner_only":
+        return """- LyraOS — Produto & Operação is the owner-only product and operations space for Lyra OS.
+- Load the Lyra OS documentation before technical work.
+- During the approved recovery program, Lyra OS is observed and must not approve, dispatch or verify its own repair or eligible fast-lane work.
+""" + EXTERNAL_FAST_LANE_RULES
 
     if decision.scope == "turnstile_only":
         return """- This space is restricted to Control iD turnstile operations only.
@@ -63,9 +89,12 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
 - Refuse requests outside this education-operations scope and ask a short clarifying question when the request is ambiguous."""
 
     if decision.scope == "general_owner_only":
-        return """- This is an owner-only space for Vinícios.
+        rules = """- This is an owner-only space for Vinícios.
 - Follow the normal Lyra/OpenClaw rules for the requested task.
 - Load relevant docs before technical, operational, external, or destructive actions."""
+        if event.space_name == "spaces/mqWtpSAAAAE":
+            return rules + "\n" + EXTERNAL_FAST_LANE_RULES
+        return rules
 
     return f"""- Scope from policy: {decision.scope}.
 - Follow the policy scope above and the normal Lyra/OpenClaw safety/documentation rules.
