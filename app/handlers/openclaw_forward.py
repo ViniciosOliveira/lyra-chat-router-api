@@ -59,15 +59,13 @@ def _build_forward_payload(payload: dict[str, Any], event: NormalizedChatEvent, 
     The `_lyraRouter` extension is additive and namespaced so it won't affect Google
     Chat response parsing, but keeps the policy decision available for audit/debug.
     """
-    root_only = decision.scope == "education_operations_analytics"
     forwarded = deepcopy(payload)
-    if root_only:
-        _strip_thread_delivery_context(forwarded)
+    _strip_thread_delivery_context(forwarded)
     forwarded["_lyraRouter"] = {
         "source": "googlechat",
         "space": event.space_name,
         "user": event.user_name,
-        "thread": None if root_only else event.thread_name,
+        "thread": None,
         "policy": decision.policy_key,
         "allowed_scope": decision.scope,
         "message": event.text,
@@ -82,7 +80,7 @@ def _build_forward_payload(payload: dict[str, Any], event: NormalizedChatEvent, 
         "intent": decision.intent.value,
         "reason": decision.reason,
         "continuation": decision.continuation,
-        "reply_mode": "root_only" if root_only else "channel_default",
+        "reply_mode": "root_only",
     }
     return forwarded
 

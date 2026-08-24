@@ -3,6 +3,8 @@ from app.googlechat.schemas import NormalizedChatEvent
 from app.handlers.openclaw_agent_hook import (
     _build_agent_message,
     _build_owner_escalation_message,
+    _post_agent_hook,
+    _post_forward_fallback_hook,
     _rules_for_space,
     _should_deliver_in_thread,
     _timeout_seconds_for_space,
@@ -176,6 +178,67 @@ def test_education_operations_requires_root_delivery():
     )
 
 
+def test_every_router_scope_requires_root_delivery():
+    for scope in (
+        "general_owner_only",
+        "crm_dev_owner_only",
+        "mission_control_dev_owner_only",
+        "marketing_performance_analysis_only",
+        "education_operations_analytics",
+    ):
+        decision = PolicyDecision(
+            policy_key="test",
+            intent=Intent.UNKNOWN,
+            decision="allow",
+            handler="openclaw_agent_hook",
+            reason="Allowed",
+            scope=scope,
+        )
+
+        assert _should_deliver_in_thread(decision) is False
+
+
+def test_agent_hook_and_fallback_never_forward_thread_id(monkeypatch):
+    settings = get_settings()
+    event = NormalizedChatEvent(
+        event_type="MESSAGE",
+        space_name="spaces/mqWtpSAAAAE",
+        space_display_name="Vinícios Oliveira",
+        user_name="users/108616006099141003473",
+        user_display_name="Vinícios Oliveira",
+        user_email="vinicios@grupooliveirarocha.com",
+        thread_name="spaces/mqWtpSAAAAE/threads/should-not-leak",
+        message_name="spaces/mqWtpSAAAAE/messages/test",
+        text="teste",
+        raw={},
+    )
+    decision = PolicyDecision(
+        policy_key="owner_dm",
+        intent=Intent.UNKNOWN,
+        decision="allow",
+        handler="openclaw_agent_hook",
+        reason="Owner allowed",
+        scope="general_owner_only",
+    )
+    captured = []
+
+    def fake_post(*, settings, payload):
+        captured.append(payload)
+        return {"ok": True}
+
+    monkeypatch.setattr(
+        "app.handlers.openclaw_agent_hook._post_agent_hook_payload",
+        fake_post,
+    )
+
+    _post_agent_hook(settings=settings, event=event, decision=decision)
+    _post_forward_fallback_hook(settings=settings, event=event, decision=decision)
+
+    assert len(captured) == 2
+    assert all("threadId" not in payload for payload in captured)
+    assert all("Thread: suppressed for root-only delivery" in payload["message"] for payload in captured)
+
+
 def test_forward_payload_marks_root_only_and_continuation():
     event = NormalizedChatEvent(
         event_type="MESSAGE",
@@ -246,3 +309,39 @@ def test_forward_payload_removes_workspace_addon_thread_context():
     forwarded = _build_forward_payload(payload, event, decision)
 
     assert "thread" not in forwarded["chat"]["messagePayload"]["message"]
+
+
+def test_forward_payload_removes_thread_context_for_owner_dm_too():
+    event = NormalizedChatEvent(
+        event_type="MESSAGE",
+        space_name="spaces/mqWtpSAAAAE",
+        space_display_name="Vinícios Oliveira",
+        user_name="users/108616006099141003473",
+        user_display_name="Vinícios Oliveira",
+        user_email="vinicios@grupooliveirarocha.com",
+        thread_name="spaces/mqWtpSAAAAE/threads/should-not-leak",
+        message_name="spaces/mqWtpSAAAAE/messages/test",
+        text="teste",
+        raw={},
+    )
+    decision = PolicyDecision(
+        policy_key="owner_dm",
+        intent=Intent.UNKNOWN,
+        decision="allow",
+        handler="openclaw_forward",
+        reason="Owner allowed",
+        scope="general_owner_only",
+    )
+    original = {
+        "message": {
+            "text": event.text,
+            "thread": {"name": event.thread_name},
+        }
+    }
+
+    forwarded = _build_forward_payload(original, event, decision)
+
+    assert "thread" in original["message"]
+    assert "thread" not in forwarded["message"]
+    assert forwarded["_lyraRouter"]["thread"] is None
+    assert forwarded["_lyraRouter"]["reply_mode"] == "root_only"

@@ -111,16 +111,13 @@ def _timeout_seconds_for_space(*, settings: Settings, decision: PolicyDecision) 
 
 
 def _should_deliver_in_thread(decision: PolicyDecision) -> bool:
-    return decision.scope != "education_operations_analytics"
+    """Google Chat delivery is root-only for every Router-managed space."""
+    return False
 
 
 def _build_agent_message(event: NormalizedChatEvent, decision: PolicyDecision) -> str:
     rules = _rules_for_space(event, decision)
-    thread_context = (
-        "suppressed for root-only delivery"
-        if decision.scope == "education_operations_analytics"
-        else event.thread_name or "unknown"
-    )
+    thread_context = "suppressed for root-only delivery"
 
     return f"""Google Chat message received via Lyra Chat Router Pub/Sub subscription.
 
@@ -209,8 +206,6 @@ def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision
         "to": event.space_name,
         "timeoutSeconds": _timeout_seconds_for_space(settings=settings, decision=decision),
     }
-    if event.thread_name and _should_deliver_in_thread(decision):
-        payload["threadId"] = event.thread_name
     return _post_agent_hook_payload(settings=settings, payload=payload)
 
 
@@ -227,8 +222,6 @@ def _post_forward_fallback_hook(
         "to": event.space_name,
         "timeoutSeconds": _timeout_seconds_for_space(settings=settings, decision=decision),
     }
-    if event.thread_name and _should_deliver_in_thread(decision):
-        payload["threadId"] = event.thread_name
     return _post_agent_hook_payload(settings=settings, payload=payload)
 
 
