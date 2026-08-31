@@ -2,8 +2,14 @@ from dataclasses import dataclass
 
 from app.googlechat.schemas import NormalizedChatEvent
 from app.policies.continuations import CONTINUATION_REASON
-from app.policies.intents import Intent, classify_intent
-from app.policies.registry import CONTENT_CREATIVES_POLICY_KEY, MKT_PERFORMANCE_POLICY_KEY, SpacePolicy, get_space_policy
+from app.policies.intents import Intent, classify_intent, is_owner_readonly_analysis_authorization
+from app.policies.registry import (
+    CONTENT_CREATIVES_POLICY_KEY,
+    MKT_PERFORMANCE_POLICY_KEY,
+    OWNER_USER,
+    SpacePolicy,
+    get_space_policy,
+)
 
 ALLOWED_MKT_INTENTS = {
     Intent.MARKETING_ANALYSIS,
@@ -32,7 +38,9 @@ EDUCATION_OPERATIONS_INTENTS = {
     Intent.CORREIOS_LABEL,
     Intent.PERFORMANCE_REPORT,
     Intent.METRIC_EXPLANATION,
+    Intent.ACADEMIC_CATALOG_ANALYSIS,
 }
+BLOCKED_EDUCATION_INTENTS = BLOCKED_MKT_INTENTS | {Intent.ACADEMIC_CATALOG_CHANGE}
 
 
 @dataclass(frozen=True)
@@ -110,6 +118,19 @@ class PolicyEngine:
                         else "analytics_handler"
                     ),
                     reason="Education operations and read-only course/certificate analytics are allowed",
+                    scope=policy.scope,
+                )
+            if (
+                event.user_name == OWNER_USER
+                and intent not in BLOCKED_EDUCATION_INTENTS
+                and is_owner_readonly_analysis_authorization(event.text)
+            ):
+                return PolicyDecision(
+                    policy_key=policy.key,
+                    intent=Intent.ACADEMIC_CATALOG_ANALYSIS,
+                    decision="allow",
+                    handler="analytics_handler",
+                    reason="Owner explicitly authorized read-only analysis in Education Operations",
                     scope=policy.scope,
                 )
             return PolicyDecision(

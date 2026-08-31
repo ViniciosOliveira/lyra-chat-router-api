@@ -10,6 +10,7 @@ JOAO_VICTOR = "users/100811886516332607168"
 RAFAEL_CAMARGO = "users/101466515008395418981"
 RAQUEL_DUARTE = "users/102763968224911184184"
 BIANCA_ROCHA = "users/108384585713055881619"
+DAIANE_NASCIMENTO = "users/102836791593473492239"
 LUCAS_ZAVODINI = "users/102398808226223128531"
 
 
@@ -266,6 +267,49 @@ def test_allows_bianca_certificate_sales_report_in_education_operations():
 
     assert decision.decision == "allow"
     assert decision.handler == "analytics_handler"
+
+
+def test_allows_daiane_readonly_academic_catalog_comparison():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "Compare os catálogos e mostre os cursos em comum e os cursos que faltam em cada instituição",
+            space="spaces/AAQAqhVlskk",
+            user=DAIANE_NASCIMENTO,
+        )
+    )
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.intent == Intent.ACADEMIC_CATALOG_ANALYSIS
+    assert decision.scope == "education_operations_analytics"
+
+
+def test_allows_owner_explicit_readonly_analysis_authorization():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "pode liberar esse tipo de análise",
+            space="spaces/AAQAqhVlskk",
+            user=OWNER,
+        )
+    )
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.intent == Intent.ACADEMIC_CATALOG_ANALYSIS
+
+
+def test_blocks_academic_catalog_mutation_in_education_operations():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "Altera o catálogo e adiciona curso de Administração",
+            space="spaces/AAQAqhVlskk",
+            user=DAIANE_NASCIMENTO,
+        )
+    )
+
+    assert decision.decision == "deny"
+    assert decision.intent == Intent.ACADEMIC_CATALOG_CHANGE
+    assert decision.scope == "education_operations_analytics"
 
 
 def test_blocks_campaign_change_in_education_operations():

@@ -178,6 +178,34 @@ def test_education_operations_requires_root_delivery():
     )
 
 
+def test_education_operations_rules_allow_readonly_academic_comparisons_only():
+    event = NormalizedChatEvent(
+        event_type="MESSAGE",
+        space_name="spaces/AAQAqhVlskk",
+        space_display_name="Comitê - Operações Educacionais",
+        user_name="users/102836791593473492239",
+        user_display_name="Daiane",
+        user_email=None,
+        thread_name=None,
+        message_name="spaces/AAQAqhVlskk/messages/catalog",
+        text="Compare os catálogos das instituições",
+        raw={},
+    )
+    decision = PolicyDecision(
+        policy_key="education_operations",
+        intent=Intent.ACADEMIC_CATALOG_ANALYSIS,
+        decision="allow",
+        handler="analytics_handler",
+        reason="Allowed",
+        scope="education_operations_analytics",
+    )
+
+    rules = _rules_for_space(event, decision)
+
+    assert "read-only academic and catalog comparisons" in rules
+    assert "never authorizes catalog, source-data or platform changes" in rules
+
+
 def test_every_router_scope_requires_root_delivery():
     for scope in (
         "general_owner_only",

@@ -4,6 +4,7 @@ from enum import StrEnum
 class Intent(StrEnum):
     MARKETING_ANALYSIS = "marketing_analysis"
     PERFORMANCE_REPORT = "performance_report"
+    ACADEMIC_CATALOG_ANALYSIS = "academic_catalog_analysis"
     TRACKING_DIAGNOSIS = "tracking_diagnosis"
     METRIC_EXPLANATION = "metric_explanation"
     RECOMMENDATION = "recommendation"
@@ -14,6 +15,7 @@ class Intent(StrEnum):
     CODE_CHANGE = "code_change"
     DEPLOY = "deploy"
     EXTERNAL_MESSAGE_SEND = "external_message_send"
+    ACADEMIC_CATALOG_CHANGE = "academic_catalog_change"
     TURNSTILE_CONTROL = "turnstile_control"
     CERTIFICATE_SIGNING = "certificate_signing"
     CORREIOS_LABEL = "correios_label"
@@ -29,6 +31,24 @@ BLOCKING_KEYWORDS = {
     Intent.CODE_CHANGE: ["altera o código", "mexe no código", "commit", "merge"],
     Intent.DEPLOY: ["deploy", "publica em produção", "subir produção"],
     Intent.EXTERNAL_MESSAGE_SEND: ["manda mensagem", "envia para", "dispara"],
+    Intent.ACADEMIC_CATALOG_CHANGE: [
+        "altera o catálogo",
+        "alterar o catálogo",
+        "muda o catálogo",
+        "mudar o catálogo",
+        "atualiza o catálogo",
+        "atualizar o catálogo",
+        "adiciona curso",
+        "adicionar curso",
+        "remove curso",
+        "remover curso",
+        "publica curso",
+        "publicar curso",
+        "edita a grade curricular",
+        "editar a grade curricular",
+        "altera a grade curricular",
+        "alterar a grade curricular",
+    ],
 }
 
 OPERATIONAL_SCOPE_KEYWORDS = {
@@ -60,6 +80,23 @@ OPERATIONAL_SCOPE_KEYWORDS = {
 }
 
 ANALYSIS_KEYWORDS = {
+    Intent.ACADEMIC_CATALOG_ANALYSIS: [
+        "comparativo de catálogo",
+        "comparativo de catalogo",
+        "comparação de catálogo",
+        "comparacao de catalogo",
+        "comparar catálogos",
+        "comparar catalogos",
+        "comparar cursos",
+        "comparação de cursos",
+        "comparacao de cursos",
+        "grade curricular",
+        "matriz curricular",
+        "cursos em comum",
+        "cursos que faltam",
+        "diferença entre os cursos",
+        "diferenca entre os cursos",
+    ],
     Intent.PERFORMANCE_REPORT: [
         "relatório",
         "report",
@@ -104,6 +141,21 @@ ANALYSIS_KEYWORDS = {
         "curva de atribuicao",
     ],
 }
+
+
+OWNER_READONLY_ANALYSIS_AUTHORIZATIONS = (
+    "pode liberar esse tipo de análise",
+    "pode liberar esse tipo de analise",
+    "autorizo esse tipo de análise",
+    "autorizo esse tipo de analise",
+    "pode fazer essa análise",
+    "pode fazer essa analise",
+)
+
+
+def is_owner_readonly_analysis_authorization(text: str) -> bool:
+    lowered = text.lower()
+    return any(phrase in lowered for phrase in OWNER_READONLY_ANALYSIS_AUTHORIZATIONS)
 
 
 def classify_intent(text: str) -> Intent:

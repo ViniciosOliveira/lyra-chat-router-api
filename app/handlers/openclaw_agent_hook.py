@@ -83,6 +83,8 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
         return """- This is the Comitê - Operações Educacionais space.
 - Authorized users may request certificate signing and Correios label generation; load the matching operational skill before acting.
 - Authorized users may also request read-only reports, analyses and charts about IS course sales and certificate sales on the platform.
+- Authorized users may request read-only academic and catalog comparisons, including course lists, curricula, matrices, overlaps and gaps between institutions.
+- An explicit authorization from Vinícios may expand the read-only analytical scope, but never authorizes catalog, source-data or platform changes.
 - Use documented/local data sources and default to aggregate results without customer personal data.
 - Do not modify source data, campaigns, permissions, code, deployments or business rules from this group.
 - Reply at the space root. Never pass replyTo or threadId when delivering a response to this space.
