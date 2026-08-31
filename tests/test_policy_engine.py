@@ -284,6 +284,20 @@ def test_allows_daiane_readonly_academic_catalog_comparison():
     assert decision.scope == "education_operations_analytics"
 
 
+def test_allows_daiane_real_academic_comparison_wording():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "Faça um comparativo entre os cursos técnicos regulares cadastrados pela LA Educação e os cursos da UNICORP com estágio",
+            space="spaces/AAQAqhVlskk",
+            user=DAIANE_NASCIMENTO,
+        )
+    )
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.intent == Intent.ACADEMIC_CATALOG_ANALYSIS
+
+
 def test_allows_owner_explicit_readonly_analysis_authorization():
     decision = PolicyEngine().decide(
         event_with_text(
