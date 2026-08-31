@@ -2,7 +2,12 @@ from dataclasses import dataclass
 
 from app.googlechat.schemas import NormalizedChatEvent
 from app.policies.continuations import CONTINUATION_REASON
-from app.policies.intents import Intent, classify_intent, is_owner_readonly_analysis_authorization
+from app.policies.intents import (
+    Intent,
+    classify_intent,
+    is_owner_readonly_analysis_authorization,
+    is_readonly_academic_analysis_continuation,
+)
 from app.policies.registry import (
     CONTENT_CREATIVES_POLICY_KEY,
     MKT_PERFORMANCE_POLICY_KEY,
@@ -132,6 +137,19 @@ class PolicyEngine:
                     handler="analytics_handler",
                     reason="Owner explicitly authorized read-only analysis in Education Operations",
                     scope=policy.scope,
+                )
+            if (
+                intent not in BLOCKED_EDUCATION_INTENTS
+                and is_readonly_academic_analysis_continuation(event.text)
+            ):
+                return PolicyDecision(
+                    policy_key=policy.key,
+                    intent=Intent.ACADEMIC_CATALOG_ANALYSIS,
+                    decision="allow",
+                    handler="analytics_handler",
+                    reason="Read-only academic analysis continuation in Education Operations",
+                    scope=policy.scope,
+                    continuation=True,
                 )
             return PolicyDecision(
                 policy_key=policy.key,

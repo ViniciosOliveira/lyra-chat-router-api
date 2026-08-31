@@ -152,10 +152,35 @@ OWNER_READONLY_ANALYSIS_AUTHORIZATIONS = (
     "pode fazer essa analise",
 )
 
+READONLY_ANALYSIS_CONTINUATION_CUES = (
+    "aguardo",
+    "concluir",
+    "conclua",
+    "finalizar",
+    "finalize",
+    "resultado",
+    "cadê",
+    "cade",
+)
+
+ACADEMIC_ANALYSIS_REFERENCES = (
+    "comparativo",
+    "comparação",
+    "comparacao",
+    "cruzamento",
+)
+
 
 def is_owner_readonly_analysis_authorization(text: str) -> bool:
     lowered = text.lower()
     return any(phrase in lowered for phrase in OWNER_READONLY_ANALYSIS_AUTHORIZATIONS)
+
+
+def is_readonly_academic_analysis_continuation(text: str) -> bool:
+    lowered = text.lower()
+    return any(cue in lowered for cue in READONLY_ANALYSIS_CONTINUATION_CUES) and any(
+        reference in lowered for reference in ACADEMIC_ANALYSIS_REFERENCES
+    )
 
 
 def classify_intent(text: str) -> Intent:

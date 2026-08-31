@@ -298,6 +298,34 @@ def test_allows_owner_explicit_readonly_analysis_authorization():
     assert decision.intent == Intent.ACADEMIC_CATALOG_ANALYSIS
 
 
+def test_allows_readonly_academic_comparison_followup():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "no aguardo do comparativo",
+            space="spaces/AAQAqhVlskk",
+            user=OWNER,
+        )
+    )
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.intent == Intent.ACADEMIC_CATALOG_ANALYSIS
+    assert decision.continuation is True
+
+
+def test_blocks_generic_waiting_followup_without_analysis_reference():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "no aguardo",
+            space="spaces/AAQAqhVlskk",
+            user=OWNER,
+        )
+    )
+
+    assert decision.decision == "deny"
+    assert decision.intent == Intent.UNKNOWN
+
+
 def test_blocks_academic_catalog_mutation_in_education_operations():
     decision = PolicyEngine().decide(
         event_with_text(

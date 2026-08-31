@@ -204,6 +204,8 @@ def test_education_operations_rules_allow_readonly_academic_comparisons_only():
 
     assert "read-only academic and catalog comparisons" in rules
     assert "never authorizes catalog, source-data or platform changes" in rules
+    assert "immediately resume and complete the most recent pending analytical request" in rules
+    assert '"no aguardo do comparativo"' in rules
 
 
 def test_every_router_scope_requires_root_delivery():

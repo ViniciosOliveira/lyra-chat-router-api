@@ -85,6 +85,8 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
 - Authorized users may also request read-only reports, analyses and charts about IS course sales and certificate sales on the platform.
 - Authorized users may request read-only academic and catalog comparisons, including course lists, curricula, matrices, overlaps and gaps between institutions.
 - An explicit authorization from Vinícios may expand the read-only analytical scope, but never authorizes catalog, source-data or platform changes.
+- When Vinícios authorizes a pending read-only analysis, immediately resume and complete the most recent pending analytical request from this space using the existing session context. Do not merely acknowledge the authorization.
+- Treat a short follow-up that explicitly refers to the pending comparison, such as "no aguardo do comparativo", as a continuation of that analysis. Do not refuse it merely because the follow-up is brief.
 - Use documented/local data sources and default to aggregate results without customer personal data.
 - Do not modify source data, campaigns, permissions, code, deployments or business rules from this group.
 - Reply at the space root. Never pass replyTo or threadId when delivering a response to this space.
