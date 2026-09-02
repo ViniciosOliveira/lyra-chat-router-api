@@ -105,6 +105,48 @@ def test_allows_owner_dm_space():
     assert decision.scope == "general_owner_only"
 
 
+def test_allows_lucas_in_edune_cmo_dm_for_readonly_analysis():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "Analisa o desempenho do funil comercial",
+            space="spaces/kf-dfKAAAAE",
+            user=LUCAS_ZAVODINI,
+        )
+    )
+
+    assert decision.decision == "allow"
+    assert decision.handler == "analytics_handler"
+    assert decision.policy_key == "mkt_performance_analysis_only"
+    assert decision.scope == "edune_cmo_readonly"
+
+
+def test_blocks_lucas_mutation_in_edune_cmo_dm():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "Aumenta o orçamento da campanha",
+            space="spaces/kf-dfKAAAAE",
+            user=LUCAS_ZAVODINI,
+        )
+    )
+
+    assert decision.decision == "deny"
+    assert decision.handler == "deny_handler"
+    assert decision.scope == "edune_cmo_readonly"
+
+
+def test_blocks_other_user_in_edune_cmo_dm():
+    decision = PolicyEngine().decide(
+        event_with_text(
+            "Analisa o funil",
+            space="spaces/kf-dfKAAAAE",
+            user=RAFAEL_CAMARGO,
+        )
+    )
+
+    assert decision.decision == "deny"
+    assert decision.reason == "User is not allowed for this Google Chat space"
+
+
 def test_allows_owner_in_crm_dev_space_with_crm_scope():
     decision = PolicyEngine().decide(
         event_with_text("pode seguir", space="spaces/AAQAKE4s-Ko")

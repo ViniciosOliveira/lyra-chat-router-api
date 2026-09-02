@@ -9,6 +9,7 @@ RAQUEL_DUARTE_USER = "users/102763968224911184184"
 
 MKT_PERFORMANCE_SPACE = "spaces/AAQAiP4nKa4"
 MKT_PERFORMANCE_POLICY_KEY = "mkt_performance_analysis_only"
+EDUNE_CMO_DM_SPACE = "spaces/kf-dfKAAAAE"
 CONTENT_CREATIVES_SPACE = "spaces/AAQATyNL6WE"
 CONTENT_CREATIVES_POLICY_KEY = "content_creatives_edune"
 CRM_DEV_SPACE = "spaces/AAQAKE4s-Ko"
@@ -53,6 +54,12 @@ SPACE_POLICIES: dict[str, SpacePolicy] = {
         label="DM Vinícios",
         allowed_users=frozenset({OWNER_USER}),
         scope="general_owner_only",
+    ),
+    EDUNE_CMO_DM_SPACE: SpacePolicy(
+        key=MKT_PERFORMANCE_POLICY_KEY,
+        label="DM Lucas — Edune CMO",
+        allowed_users=frozenset({LUCAS_ZAVODINI_USER}),
+        scope="edune_cmo_readonly",
     ),
     "spaces/AAQAqr2EWPE": SpacePolicy(
         key="test_lyra",

@@ -24,7 +24,16 @@ class Intent(StrEnum):
 
 
 BLOCKING_KEYWORDS = {
-    Intent.BUDGET_CHANGE: ["aumenta orçamento", "aumentar orçamento", "reduz orçamento", "muda orçamento"],
+    Intent.BUDGET_CHANGE: [
+        "aumenta orçamento",
+        "aumenta o orçamento",
+        "aumentar orçamento",
+        "aumentar o orçamento",
+        "reduz orçamento",
+        "reduz o orçamento",
+        "muda orçamento",
+        "muda o orçamento",
+    ],
     Intent.CAMPAIGN_CHANGE: ["pausa campanha", "pausar campanha", "ativa campanha", "editar campanha"],
     Intent.TAG_CHANGE: ["instala tag", "alterar tag", "mudar tag", "taguear"],
     Intent.PIXEL_CHANGE: ["instala pixel", "alterar pixel", "mudar pixel"],
