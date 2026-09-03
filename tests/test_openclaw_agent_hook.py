@@ -131,6 +131,9 @@ def test_all_dev_scopes_use_external_fast_lane_without_lyra_os_dependency():
         assert "external Google Chat fast lane" in rules
         assert "Do not create, approve, dispatch or verify a Lyra OS demand" in rules
         assert "Product deploys" in rules
+        assert "never register or execute it as fast lane work" in rules
+        assert "canonical approval does not convert sensitive work into fast lane work" in rules
+        assert "instead of asking the sponsor again solely because infrastructure failed" in rules
 
 
 def test_shared_dev_space_keeps_group_turn_timeout_short():

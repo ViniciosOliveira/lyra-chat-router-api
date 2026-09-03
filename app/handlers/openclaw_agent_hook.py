@@ -16,6 +16,8 @@ EXTERNAL_FAST_LANE_RULES = """- This owner request is covered by the external Go
 - Do not create, approve, dispatch or verify a Lyra OS demand for eligible work. Record it with a `fastlane-` id in the independent external journal before mutation.
 - The standing authority removes repeated individual approval for exact-scope reads, diagnosis, documentation, internal source/config edits, tests/builds, local commits and approved internal branches or pull requests.
 - Product deploys, credentials/security, DNS, manual database mutation, deletion, destructive migration, external sensitive contact and irreversible action still require specific sponsor authority.
+- If any requested action is outside the standing authority, never register or execute it as fast lane work. Create or resume the canonical Lyra OS demand and bind the sponsor approval there.
+- A canonical approval does not convert sensitive work into fast lane work. After the approval bridge accepts it, preserve the objective authority across bounded technical retries and successors instead of asking the sponsor again solely because infrastructure failed.
 - Keep the group as the visible control plane and use durable external checkpoints for long execution."""
 
 
