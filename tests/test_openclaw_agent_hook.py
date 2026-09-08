@@ -211,12 +211,43 @@ def test_education_operations_rules_allow_readonly_academic_comparisons_only():
     assert '"no aguardo do comparativo"' in rules
 
 
+def test_edune_cmo_rules_include_standing_scoped_report_authority():
+    event = NormalizedChatEvent(
+        event_type="MESSAGE",
+        space_name="spaces/kf-dfKAAAAE",
+        space_display_name="Lucas Zavodini",
+        user_name="users/102398808226223128531",
+        user_display_name="Lucas",
+        user_email=None,
+        thread_name=None,
+        message_name="spaces/kf-dfKAAAAE/messages/report",
+        text="Gere e publique o relatório do funil",
+        raw={},
+    )
+    decision = PolicyDecision(
+        policy_key="mkt_performance_analysis_only",
+        intent=Intent.PERFORMANCE_REPORT,
+        decision="allow",
+        handler="analytics_handler",
+        reason="Allowed",
+        scope="edune_cmo_readonly",
+    )
+
+    rules = _rules_for_space(event, decision)
+
+    assert "standing sponsor authority" in rules
+    assert "edune_cmo_publish_report" in rules
+    assert "Do not ask Vinícios" in rules
+    assert "Never send it to a group or third party" in rules
+
+
 def test_every_router_scope_requires_root_delivery():
     for scope in (
         "general_owner_only",
         "crm_dev_owner_only",
         "mission_control_dev_owner_only",
         "marketing_performance_analysis_only",
+        "edune_cmo_readonly",
         "education_operations_analytics",
     ):
         decision = PolicyDecision(
