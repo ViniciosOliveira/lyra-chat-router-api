@@ -32,6 +32,16 @@ def _rules_for_space(event: NormalizedChatEvent, decision: PolicyDecision) -> st
 - You must not execute campaign, budget, tag, pixel, code, deploy, permission, or external-send changes.
 - If the user asks for execution, refuse briefly and offer analysis/recommendation instead."""
 
+    if decision.scope == "edune_cmo_readonly":
+        return """- This is Lucas Zavodini's private Edune CMO workspace.
+- Lucas has standing sponsor authority to request, generate and publish read-only aggregate reports about Edune Marketing, Growth and Commercial without per-report approval.
+- Publication must use only `edune_cmo_publish_report`; listing must use only `edune_cmo_list_reports`.
+- Reports must contain source, period and freshness, stay sanitized and aggregate, and be published only under the Lyra marketing or sales report paths.
+- Return the link only in this same DM. Never send it to a group or third party.
+- Personal data, raw exports, credentials and secrets are forbidden.
+- Campaign, budget, CRM, source-data, code, permission and system changes remain forbidden.
+- Do not ask Vinícios to approve an in-scope report. Ask only when the requested content or destination crosses these boundaries."""
+
     if decision.scope == "crm_dev_owner_only":
         return """- Dev - CRM is an operational development space exclusively for the autonomous CRM product.
 - Load memory/projects/crm/README.md, memory/projects/crm-api/README.md, decisions and lessons before technical work.
