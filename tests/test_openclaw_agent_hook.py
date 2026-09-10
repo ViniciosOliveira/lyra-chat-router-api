@@ -286,7 +286,8 @@ def test_agent_hook_and_fallback_never_forward_thread_id(monkeypatch):
     )
     captured = []
 
-    def fake_post(*, settings, payload):
+    def fake_post(*, settings, payload, space_name):
+        assert space_name == event.space_name
         captured.append(payload)
         return {"ok": True}
 

@@ -15,9 +15,13 @@ class Settings(BaseSettings):
     openclaw_forward_enabled: bool = False
     openclaw_forward_url: str | None = None
     openclaw_forward_timeout_seconds: float = 25.0
+    openclaw_shadow_space: str | None = None
+    openclaw_shadow_forward_url: str | None = None
     openclaw_agent_hook_enabled: bool = False
     openclaw_agent_hook_url: str | None = None
     openclaw_agent_hook_token: str | None = None
+    openclaw_shadow_agent_hook_url: str | None = None
+    openclaw_shadow_agent_hook_token: str | None = None
     openclaw_agent_hook_agent_id: str = "main"
     openclaw_agent_hook_session_key_prefix: str = "hook:googlechat"
     openclaw_agent_hook_timeout_seconds: int = 120
