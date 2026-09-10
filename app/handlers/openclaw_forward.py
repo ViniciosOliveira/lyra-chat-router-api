@@ -16,6 +16,12 @@ class OpenClawForwardError(RuntimeError):
     pass
 
 
+def _forward_target(settings: Settings, space_name: str | None) -> str | None:
+    if space_name == settings.openclaw_shadow_space:
+        return settings.openclaw_shadow_forward_url
+    return settings.openclaw_forward_url
+
+
 def _strip_thread_delivery_context(payload: dict[str, Any]) -> None:
     payload.pop("thread", None)
     candidates = [payload.get("message")]
@@ -88,10 +94,11 @@ def _build_forward_payload(payload: dict[str, Any], event: NormalizedChatEvent, 
 def _post_to_openclaw(
     *,
     settings: Settings,
+    target_url: str | None,
     payload: dict[str, Any],
     authorization: str | None,
 ) -> dict[str, Any]:
-    if not settings.openclaw_forward_url:
+    if not target_url:
         raise OpenClawForwardError("OpenClaw forward URL is not configured")
 
     headers = {"Content-Type": "application/json"}
@@ -99,7 +106,7 @@ def _post_to_openclaw(
         headers["Authorization"] = authorization
 
     response = requests.post(
-        settings.openclaw_forward_url,
+        target_url,
         json=payload,
         headers=headers,
         timeout=settings.openclaw_forward_timeout_seconds,
@@ -129,10 +136,12 @@ async def forward_to_openclaw(
     authorization: str | None,
 ) -> dict[str, Any]:
     forwarded_payload = _build_forward_payload(payload, event, decision)
+    target_url = _forward_target(settings, event.space_name)
     try:
         return await run_in_threadpool(
             _post_to_openclaw,
             settings=settings,
+            target_url=target_url,
             payload=forwarded_payload,
             authorization=authorization,
         )

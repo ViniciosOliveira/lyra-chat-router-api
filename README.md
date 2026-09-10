@@ -101,3 +101,9 @@ Antes de produção:
 - `GOOGLE_CHAT_AUDIENCE=https://api.grupooliveirarocha.com/googlechat/`
 - `MC_ADMIN_SHARED_SECRET` forte e fora do Git.
 - Não trocar o endpoint real do Google Chat antes do smoke test em staging.
+
+## Shadow por espaço
+
+O Router pode encaminhar um único espaço para uma instância OpenClaw paralela,
+mantendo todos os demais no upstream principal. O contrato, os gates e o
+rollback estão em `deploy/SHADOW_DM_RUNBOOK.md`.

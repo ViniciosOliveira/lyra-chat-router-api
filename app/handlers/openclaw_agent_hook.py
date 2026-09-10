@@ -183,17 +183,29 @@ def build_channel_session_key(*, settings: Settings, event: NormalizedChatEvent)
     return f"{prefix}:fallback:{space}"
 
 
-def _post_agent_hook_payload(*, settings: Settings, payload: dict[str, Any]) -> dict[str, Any]:
-    if not settings.openclaw_agent_hook_url:
+def _hook_target(settings: Settings, space_name: str | None) -> tuple[str | None, str | None]:
+    if space_name == settings.openclaw_shadow_space:
+        return settings.openclaw_shadow_agent_hook_url, settings.openclaw_shadow_agent_hook_token
+    return settings.openclaw_agent_hook_url, settings.openclaw_agent_hook_token
+
+
+def _post_agent_hook_payload(
+    *,
+    settings: Settings,
+    payload: dict[str, Any],
+    space_name: str | None,
+) -> dict[str, Any]:
+    target_url, target_token = _hook_target(settings, space_name)
+    if not target_url:
         raise OpenClawAgentHookError("OpenClaw agent hook URL is not configured")
-    if not settings.openclaw_agent_hook_token:
+    if not target_token:
         raise OpenClawAgentHookError("OpenClaw agent hook token is not configured")
 
     response = requests.post(
-        settings.openclaw_agent_hook_url,
+        target_url,
         json=payload,
         headers={
-            "Authorization": f"Bearer {settings.openclaw_agent_hook_token}",
+            "Authorization": f"Bearer {target_token}",
             "Content-Type": "application/json",
         },
         timeout=settings.openclaw_agent_hook_request_timeout_seconds,
@@ -222,7 +234,7 @@ def _post_agent_hook(*, settings: Settings, event: NormalizedChatEvent, decision
         "to": event.space_name,
         "timeoutSeconds": _timeout_seconds_for_space(settings=settings, decision=decision),
     }
-    return _post_agent_hook_payload(settings=settings, payload=payload)
+    return _post_agent_hook_payload(settings=settings, payload=payload, space_name=event.space_name)
 
 
 def _post_forward_fallback_hook(
@@ -238,7 +250,7 @@ def _post_forward_fallback_hook(
         "to": event.space_name,
         "timeoutSeconds": _timeout_seconds_for_space(settings=settings, decision=decision),
     }
-    return _post_agent_hook_payload(settings=settings, payload=payload)
+    return _post_agent_hook_payload(settings=settings, payload=payload, space_name=event.space_name)
 
 
 def should_escalate_to_owner(decision: PolicyDecision) -> bool:
@@ -286,7 +298,7 @@ def _post_owner_escalation(*, settings: Settings, event: NormalizedChatEvent, de
         "to": settings.google_chat_owner_space,
         "timeoutSeconds": min(_timeout_seconds_for_space(settings=settings, decision=decision), 120),
     }
-    return _post_agent_hook_payload(settings=settings, payload=payload)
+    return _post_agent_hook_payload(settings=settings, payload=payload, space_name=event.space_name)
 
 
 async def enqueue_openclaw_agent_turn(
