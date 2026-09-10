@@ -41,6 +41,8 @@ curl http://127.0.0.1:3201/googlechat/health
 pytest
 ```
 
+As dívidas que bloqueiam o próximo deploy estão em `PENDING.md`.
+
 ## Smoke test local
 
 Em um terminal:
