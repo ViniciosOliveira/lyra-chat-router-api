@@ -1,11 +1,10 @@
 import json
 from pathlib import Path
 
-from fastapi.testclient import TestClient
-
 from app.googlechat import router as googlechat_router
 from app.main import app
 from app.policies.intents import Intent
+from tests.asgi_client import ASGITestClient as TestClient
 
 
 def test_googlechat_post_allows_analysis_in_dev_mode():

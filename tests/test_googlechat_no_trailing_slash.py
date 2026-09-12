@@ -1,9 +1,8 @@
 import json
 from pathlib import Path
 
-from fastapi.testclient import TestClient
-
 from app.main import app
+from tests.asgi_client import ASGITestClient as TestClient
 
 
 def test_googlechat_post_accepts_no_trailing_slash_in_dev_mode():

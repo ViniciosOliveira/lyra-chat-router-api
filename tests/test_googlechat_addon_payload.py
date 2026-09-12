@@ -1,10 +1,9 @@
-from fastapi.testclient import TestClient
-
 from app.core.config import get_settings
 from app.delivery.ledger import DeliveryState
 from app.googlechat import router as googlechat_router
 from app.handlers import openclaw_agent_hook, openclaw_forward
 from app.main import app
+from tests.asgi_client import ASGITestClient as TestClient
 
 
 def _addon_payload(text: str = "oi") -> dict:
