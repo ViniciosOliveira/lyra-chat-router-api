@@ -1,9 +1,8 @@
 import json
 from pathlib import Path
 
-from fastapi.testclient import TestClient
-
 from app.main import app
+from tests.asgi_client import ASGITestClient as TestClient
 
 ADMIN_HEADERS = {"X-MC-Admin-Secret": "dev-admin-secret"}
 

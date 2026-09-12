@@ -1,8 +1,6 @@
 import base64
 import json
 
-from fastapi.testclient import TestClient
-
 from app.core.config import get_settings
 from app.handlers import openclaw_agent_hook
 from app.handlers.openclaw_agent_hook import (
@@ -13,6 +11,7 @@ from app.handlers.openclaw_agent_hook import (
 )
 from app.policies.engine import Intent, PolicyDecision
 from app.main import app
+from tests.asgi_client import ASGITestClient as TestClient
 
 
 def _workspace_event(text: str = "Analisa o CPL", sender_type: str = "HUMAN") -> dict:
