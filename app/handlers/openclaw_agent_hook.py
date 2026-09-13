@@ -184,7 +184,7 @@ def build_channel_session_key(*, settings: Settings, event: NormalizedChatEvent)
 
 
 def _hook_target(settings: Settings, space_name: str | None) -> tuple[str | None, str | None]:
-    if space_name == settings.openclaw_shadow_space:
+    if space_name in settings.effective_openclaw_shadow_spaces:
         return settings.openclaw_shadow_agent_hook_url, settings.openclaw_shadow_agent_hook_token
     return settings.openclaw_agent_hook_url, settings.openclaw_agent_hook_token
 

@@ -17,7 +17,7 @@ class OpenClawForwardError(RuntimeError):
 
 
 def _forward_target(settings: Settings, space_name: str | None) -> str | None:
-    if space_name == settings.openclaw_shadow_space:
+    if space_name in settings.effective_openclaw_shadow_spaces:
         return settings.openclaw_shadow_forward_url
     return settings.openclaw_forward_url
 
