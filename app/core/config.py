@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     openclaw_forward_enabled: bool = False
     openclaw_forward_url: str | None = None
     openclaw_forward_timeout_seconds: float = 25.0
-    openclaw_shadow_space: str | None = None
+    openclaw_shadow_spaces: str | None = None
     openclaw_shadow_forward_url: str | None = None
     openclaw_agent_hook_enabled: bool = False
     openclaw_agent_hook_url: str | None = None
@@ -42,6 +42,14 @@ class Settings(BaseSettings):
         if not self.is_prod:
             return "dev-admin-secret"
         return ""
+
+    @property
+    def effective_openclaw_shadow_spaces(self) -> frozenset[str]:
+        return frozenset(
+            space.strip()
+            for space in (self.openclaw_shadow_spaces or "").split(",")
+            if space.strip()
+        )
 
 
 @lru_cache
