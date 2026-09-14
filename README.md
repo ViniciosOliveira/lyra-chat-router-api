@@ -109,3 +109,7 @@ Antes de produção:
 O Router pode encaminhar um único espaço para uma instância OpenClaw paralela,
 mantendo todos os demais no upstream principal. O contrato, os gates e o
 rollback estão em `deploy/SHADOW_DM_RUNBOOK.md`.
+
+## Histórico técnico
+
+[Suplemento A3](docs/history/brain-20260914/README.md): evolução dos contratos e lições de entrega. Não substitui os runbooks atuais nem comprova produção.
