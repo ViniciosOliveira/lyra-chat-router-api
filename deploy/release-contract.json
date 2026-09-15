@@ -1,0 +1,29 @@
+{
+  "budget": {
+    "dry_run": 24,
+    "deploy": 2,
+    "rollback": 2,
+    "restart": 4,
+    "health": 60
+  },
+  "health_fields": {
+    "status": "ok"
+  },
+  "unit_template": "[Unit]\nDescription=Lyra Chat Router API\nAfter=network.target\n\n[Service]\nUser=root\nWorkingDirectory=/opt/lyra-chat-router-runtime/current\nEnvironmentFile=/opt/lyra-chat-router-api/.env\nExecStart=/opt/lyra-chat-router-api/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 3201\nRestart=always\nRestartSec=5\n\n[Install]\nWantedBy=multi-user.target\n",
+  "legacy": "/opt/lyra-chat-router-api",
+  "kind": "python",
+  "host": "backends",
+  "unit": "lyra-chat-router-api.service",
+  "current": "/opt/lyra-chat-router-runtime/current",
+  "releases": "/opt/lyra-chat-router-releases",
+  "asset_archive": null,
+  "health": "http://127.0.0.1:3201/googlechat/health",
+  "entry": "app/main.py",
+  "python_runtime": "/opt/lyra-chat-router-api/.venv/bin/uvicorn",
+  "system": "lyra-chat-router-api",
+  "candidates": "/opt/lyra-chat-router-api-candidates",
+  "state": "/var/lib/lyra-chat-router-api-deploy",
+  "lock": "/run/lock/lyra-chat-router-api-release-deploy.lock",
+  "migration_policy": "no migration command; unchanged schema/startup DDL and worker compatibility required; otherwise blocked",
+  "unit_file": "/etc/systemd/system/lyra-chat-router-api.service"
+}
