@@ -81,7 +81,7 @@ existing drop-ins remain installed, and their effective hash is rechecked. No
 unit template is installed by this source PR.
 
 Budgets rolling 24h: dry_run24, deploy2, rollback2, restart4, health60. Apply reserves
-one deploy, one recovery, two service restarts (zero for static), twenty bounded
+one deploy, one recovery, two service restarts (zero for static), twenty reserved (at most twelve used) bounded
 health attempts before side effects. Failed attempts count. No automatic budget
 increase. Local receipts do not replace the controller's canonical hash-chain.
 
@@ -105,3 +105,8 @@ EnvironmentFile, interpreter, bind address and port. Existing drop-ins remain.
 Worker units are not restarted or silently repointed: controller admission must
 prove cross-version compatibility; otherwise a coordinated worker plan is needed.
 Router forwarding/hook selectors are not read, rewritten or smoke-dispatched.
+
+Host commands have explicit timeouts: 3s for readback, 120s for restart/reload.
+Each health phase attempts at most six probes (3s HTTP, 3s PID readback, 2s delay).
+The controller must additionally impose a wall-clock deadline on its entire job;
+local receipts fence a timed-out or interrupted operation instead of retrying it.

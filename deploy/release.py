@@ -75,7 +75,8 @@ def exchange(first, second):
 
 class Host:
     def run(self, *cmd):
-        return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout.strip()
+        return subprocess.run(cmd, capture_output=True, text=True, check=True,
+                              timeout=120 if 'restart' in cmd or 'daemon-reload' in cmd else 3).stdout.strip()
 
     def effective(self, spec):
         if spec['unit']:
@@ -215,7 +216,7 @@ class Engine:
             destination.chmod(0o644)
 
     def health(self, target):
-        for _ in range(10):
+        for _ in range(6):
             try:
                 return self.h.health(self.s, target)
             except Exception:
