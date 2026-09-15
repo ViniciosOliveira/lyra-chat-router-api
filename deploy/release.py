@@ -172,6 +172,11 @@ class Engine:
 
     def dry_run(self, commit):
         self.unresolved()
+        check(self.current.parent.is_dir() and not self.current.parent.is_symlink(), 'current parent bootstrap missing')
+        if self.s['kind'] == 'static':
+            check(Path(self.s['asset_archive']).is_dir() and not Path(self.s['asset_archive']).is_symlink(), 'asset archive bootstrap missing')
+        if self.s.get('unit_template'):
+            check(not Path(self.s['unit_file']).is_symlink(), 'unit fragment symlink needs review')
         a = self.admission(commit)
         candidate = Path(self.s['candidates']) / commit
         check(candidate.is_dir() and not candidate.is_symlink(), 'candidate must be real directory')
@@ -266,6 +271,7 @@ class Engine:
         try:
             shutil.copytree(candidate, release, symlinks=True)
             check(fingerprint(release) == p['admission']['artifact_digest'], 'copied artifact mismatch')
+            self.archive_assets(self.previous())
             self.archive_assets(release)
             temp.symlink_to(release)
             # Existing directory or symlink is retained exactly at exchange path.

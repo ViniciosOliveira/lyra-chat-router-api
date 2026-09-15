@@ -120,6 +120,16 @@ class ContractTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'collision'):
             self.e.archive_assets(self.candidate)
         self.assertEqual(p.read_text(), 'different')
+    def test_old_static_assets_survive_new_release(self):
+        if self.s['kind'] != 'static':
+            self.skipTest('static-only asset retention')
+        (Path(self.s['current']) / 'assets/old-hash.js').write_text('old client asset')
+        self.a['baseline'] = self.e.snapshot()
+        plan = self.plan(); self.e.apply(plan)
+        self.assertEqual((Path(self.s['asset_archive']) / 'old-hash.js').read_text(), 'old client asset')
+        self.e.rollback(plan)
+        self.assertTrue((Path(self.s['asset_archive']) / 'main-hash.js').exists())
+
     def test_versioned_unit_projection_matches_contract(self):
         spec = json.loads((ROOT / 'release-contract.json').read_text())
         if spec['unit_template']:
